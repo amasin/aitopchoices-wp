@@ -1,0 +1,102 @@
+# AI Top Choices WordPress - .gitignore
+# Strategy: Ignore EVERYTHING except our custom plugin and docs
+
+# =============================================================================
+# IGNORE EVERYTHING BY DEFAULT
+# =============================================================================
+/*
+/*/
+
+# =============================================================================
+# ALLOW SPECIFIC FILES AND DIRECTORIES
+# =============================================================================
+
+# Root documentation files
+!/.gitignore
+!/README.md
+!/LICENSE
+!/SETUP.md
+!/IMPLEMENTATION-SUMMARY.md
+!/QUICK-REFERENCE.md
+
+# Allow wp-content directory
+!/wp-content/
+
+# Inside wp-content, ignore everything by default
+/wp-content/*
+
+# But allow the plugins directory
+!/wp-content/plugins/
+
+# Inside plugins, ignore everything
+/wp-content/plugins/*
+
+# Except our custom plugin
+!/wp-content/plugins/aitc-ai-tools/
+
+# =============================================================================
+# ALWAYS IGNORE (even if whitelisted above)
+# =============================================================================
+
+# Sensitive configuration
+wp-config.php
+wp-config-local.php
+.env
+.env.*
+*.pem
+*.key
+*.cert
+secrets.json
+
+# Logs
+*.log
+error_log
+debug.log
+
+# Operating system
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+dist/
+build/
+*.map
+
+# Backups and temporary
+*.bak
+*.backup
+*.tmp
+*.swp
+*.swo
+*~
+
+# Database dumps
+*.sql
+*.sql.gz
+
+# Compressed files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Claude AI settings
+.claude/
+
+# Development files
+.todo
+TODO.md
+NOTES.md
+scratch.txt
+test.php

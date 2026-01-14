@@ -1,0 +1,40 @@
+/**
+ * Admin styles for AI Tools plugin
+ */
+
+.aitc-meta-box {
+	margin: 10px 0;
+}
+
+.aitc-meta-box label {
+	display: block;
+	margin-bottom: 5px;
+}
+
+.aitc-meta-box input[type="text"],
+.aitc-meta-box input[type="url"],
+.aitc-meta-box input[type="number"],
+.aitc-meta-box select,
+.aitc-meta-box textarea {
+	width: 100%;
+	max-width: 600px;
+}
+
+.aitc-meta-box .small-text {
+	width: 100px;
+}
+
+.aitc-meta-box .description {
+	color: #666;
+	font-size: 12px;
+	font-style: italic;
+}
+
+.aitc-price-single,
+.aitc-price-range,
+.aitc-price-tiers {
+	margin: 15px 0;
+	padding: 15px;
+	background: #f9f9f9;
+	border-left: 3px solid #0073aa;
+}
