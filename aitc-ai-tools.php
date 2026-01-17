@@ -65,13 +65,19 @@ function aitc_ai_tools_deactivate() {
 register_deactivation_hook( __FILE__, 'aitc_ai_tools_deactivate' );
 
 /**
- * Initialize plugin
+ * Register post types and taxonomies on 'init' hook
+ * This must run on 'init' because register_post_type requires $wp_rewrite to be available
  */
-function aitc_ai_tools_init() {
-	// Register post types and taxonomies
+function aitc_ai_tools_register_types() {
 	AITC_Post_Types::register();
 	AITC_Taxonomies::register();
+}
+add_action( 'init', 'aitc_ai_tools_register_types' );
 
+/**
+ * Initialize plugin components on 'init' hook (after post types are registered)
+ */
+function aitc_ai_tools_init() {
 	// Initialize meta boxes
 	AITC_Meta_Boxes::init();
 
@@ -91,4 +97,4 @@ function aitc_ai_tools_init() {
 		AITC_Ratings_Admin::init();
 	}
 }
-add_action( 'plugins_loaded', 'aitc_ai_tools_init' );
+add_action( 'init', 'aitc_ai_tools_init', 20 );
