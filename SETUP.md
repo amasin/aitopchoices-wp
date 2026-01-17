@@ -40,7 +40,7 @@ Go to **AI Tools → Settings** in WordPress admin and confirm:
 ```bash
 # Option 1: Use the provided sample CSV
 # Go to: AI Tools → Import CSV
-# Upload: wp-content/plugins/aitc-ai-tools/sample-import.csv
+# Upload: sample-import.csv
 # Check: "Update existing tools with matching titles"
 # Click: Import CSV
 
@@ -205,7 +205,7 @@ Go to **AI Tools → Settings** to:
 ### Override Templates
 
 1. In your theme, create folder: `aitc-ai-tools/`
-2. Copy template from plugin: `wp-content/plugins/aitc-ai-tools/templates/single-ai_tool.php`
+2. Copy template from plugin: `templates/single-ai_tool.php`
 3. Paste to: `wp-content/themes/your-theme/aitc-ai-tools/single-ai_tool.php`
 4. Customize as needed
 5. WordPress automatically uses your version
@@ -257,8 +257,8 @@ wp db query "SHOW INDEX FROM wp_aitc_tool_ratings"
 ### CDN for Assets
 
 Configure your CDN to cache:
-- `/wp-content/plugins/aitc-ai-tools/assets/css/`
-- `/wp-content/plugins/aitc-ai-tools/assets/js/`
+- `/assets/css/`
+- `/assets/js/`
 
 ---
 
@@ -358,9 +358,9 @@ Before going live:
 
 ## Support
 
-- Plugin README: `wp-content/plugins/aitc-ai-tools/README.md`
-- Testing Guide: `wp-content/plugins/aitc-ai-tools/TESTING-CHECKLIST.md`
-- Sample Data: `wp-content/plugins/aitc-ai-tools/sample-import.csv`
+- Plugin README: `README.md`
+- Testing Guide: `TESTING-CHECKLIST.md`
+- Sample Data: `sample-import.csv`
 
 ---
 

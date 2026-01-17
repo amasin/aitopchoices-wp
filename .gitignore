@@ -1,41 +1,8 @@
-# AI Top Choices WordPress - .gitignore
-# Strategy: Ignore EVERYTHING except our custom plugin and docs
+# AI Top Choices WordPress Plugin - .gitignore
+# All plugin files are now at the root level
 
 # =============================================================================
-# IGNORE EVERYTHING BY DEFAULT
-# =============================================================================
-/*
-/*/
-
-# =============================================================================
-# ALLOW SPECIFIC FILES AND DIRECTORIES
-# =============================================================================
-
-# Root documentation files
-!/.gitignore
-!/README.md
-!/LICENSE
-!/SETUP.md
-!/IMPLEMENTATION-SUMMARY.md
-!/QUICK-REFERENCE.md
-
-# Allow wp-content directory
-!/wp-content/
-
-# Inside wp-content, ignore everything by default
-/wp-content/*
-
-# But allow the plugins directory
-!/wp-content/plugins/
-
-# Inside plugins, ignore everything
-/wp-content/plugins/*
-
-# Except our custom plugin
-!/wp-content/plugins/aitc-ai-tools/
-
-# =============================================================================
-# ALWAYS IGNORE (even if whitelisted above)
+# ALWAYS IGNORE
 # =============================================================================
 
 # Sensitive configuration

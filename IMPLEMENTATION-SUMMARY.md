@@ -10,7 +10,7 @@ All requirements have been successfully implemented for the **AI Top Choices - A
 
 ### Plugin Structure
 ```
-wp-content/plugins/aitc-ai-tools/
+Root directory (aitc-ai-tools)/
 ├── aitc-ai-tools.php                 # Main plugin file
 ├── README.md                          # Plugin documentation
 ├── TESTING-CHECKLIST.md               # Comprehensive test guide
@@ -521,13 +521,13 @@ Potential v2.0 features:
 ## 📞 Support Resources
 
 ### Documentation:
-- Plugin README: [wp-content/plugins/aitc-ai-tools/README.md](wp-content/plugins/aitc-ai-tools/README.md)
+- Plugin README: [Root directory (aitc-ai-tools)/README.md](Root directory (aitc-ai-tools)/README.md)
 - Setup Guide: [SETUP.md](SETUP.md)
-- Testing Guide: [wp-content/plugins/aitc-ai-tools/TESTING-CHECKLIST.md](wp-content/plugins/aitc-ai-tools/TESTING-CHECKLIST.md)
+- Testing Guide: [Root directory (aitc-ai-tools)/TESTING-CHECKLIST.md](Root directory (aitc-ai-tools)/TESTING-CHECKLIST.md)
 
 ### Quick Links:
-- Sample CSV: [wp-content/plugins/aitc-ai-tools/sample-import.csv](wp-content/plugins/aitc-ai-tools/sample-import.csv)
-- Main Plugin File: [wp-content/plugins/aitc-ai-tools/aitc-ai-tools.php](wp-content/plugins/aitc-ai-tools/aitc-ai-tools.php)
+- Sample CSV: [Root directory (aitc-ai-tools)/sample-import.csv](Root directory (aitc-ai-tools)/sample-import.csv)
+- Main Plugin File: [Root directory (aitc-ai-tools)/aitc-ai-tools.php](Root directory (aitc-ai-tools)/aitc-ai-tools.php)
 
 ### Common Issues:
 See SETUP.md → Troubleshooting section

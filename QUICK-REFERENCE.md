@@ -134,7 +134,7 @@ wp-content/themes/your-theme/
 
 **Plugin originals:**
 ```
-wp-content/plugins/aitc-ai-tools/templates/
+templates/
 ```
 
 ---
@@ -263,9 +263,9 @@ aitc_ai_tools_schema_enabled
 
 | File | Purpose |
 |------|---------|
-| [README.md](wp-content/plugins/aitc-ai-tools/README.md) | Plugin features |
+| [README.md](README.md) | Plugin features |
 | [SETUP.md](SETUP.md) | Installation guide |
-| [TESTING-CHECKLIST.md](wp-content/plugins/aitc-ai-tools/TESTING-CHECKLIST.md) | 150+ test cases |
+| [TESTING-CHECKLIST.md](TESTING-CHECKLIST.md) | 150+ test cases |
 | [IMPLEMENTATION-SUMMARY.md](IMPLEMENTATION-SUMMARY.md) | Complete overview |
 | [QUICK-REFERENCE.md](QUICK-REFERENCE.md) | This file |
 
@@ -349,9 +349,9 @@ aitc_ai_tools_schema_enabled
 
 ## 📞 Need Help?
 
-1. Check [TESTING-CHECKLIST.md](wp-content/plugins/aitc-ai-tools/TESTING-CHECKLIST.md) for detailed walkthroughs
+1. Check [TESTING-CHECKLIST.md](TESTING-CHECKLIST.md) for detailed walkthroughs
 2. Review [SETUP.md](SETUP.md) troubleshooting section
-3. Examine [README.md](wp-content/plugins/aitc-ai-tools/README.md) for technical details
+3. Examine [README.md](README.md) for technical details
 
 ---
 
