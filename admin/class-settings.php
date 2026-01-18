@@ -36,6 +36,7 @@ class AITC_Settings {
 	 */
 	public static function register_settings() {
 		register_setting( 'aitc_ai_tools_settings', 'aitc_ai_tools_schema_enabled' );
+		register_setting( 'aitc_ai_tools_settings', 'aitc_ai_tools_overwrite_empty_fields' );
 	}
 
 	/**
@@ -48,10 +49,12 @@ class AITC_Settings {
 
 		if ( isset( $_POST['aitc_save_settings'] ) && check_admin_referer( 'aitc_settings_nonce' ) ) {
 			update_option( 'aitc_ai_tools_schema_enabled', isset( $_POST['schema_enabled'] ) ? '1' : '0' );
+			update_option( 'aitc_ai_tools_overwrite_empty_fields', isset( $_POST['overwrite_empty_fields'] ) ? '1' : '0' );
 			echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Settings saved.', 'aitc-ai-tools' ) . '</p></div>';
 		}
 
 		$schema_enabled = get_option( 'aitc_ai_tools_schema_enabled', '1' );
+		$overwrite_empty_fields = get_option( 'aitc_ai_tools_overwrite_empty_fields', '0' );
 		?>
 
 		<div class="wrap">
@@ -72,6 +75,20 @@ class AITC_Settings {
 							</label>
 							<p class="description">
 								<?php esc_html_e( 'Disable this if you are using RankMath or another SEO plugin that generates schema markup to avoid duplication.', 'aitc-ai-tools' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<?php esc_html_e( 'CSV Import Behavior', 'aitc-ai-tools' ); ?>
+						</th>
+						<td>
+							<label>
+								<input type="checkbox" name="overwrite_empty_fields" value="1" <?php checked( $overwrite_empty_fields, '1' ); ?>>
+								<?php esc_html_e( 'Overwrite empty fields when importing CSV', 'aitc-ai-tools' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'If enabled, blank CSV cells will clear existing values. If disabled, blank cells are ignored for partial updates.', 'aitc-ai-tools' ); ?>
 							</p>
 						</td>
 					</tr>

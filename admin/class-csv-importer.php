@@ -38,6 +38,11 @@ class AITC_CSV_Importer {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.', 'aitc-ai-tools' ) );
 		}
+
+		$import_errors = get_transient( 'aitc_ai_tools_import_errors' );
+		if ( $import_errors ) {
+			delete_transient( 'aitc_ai_tools_import_errors' );
+		}
 		?>
 
 		<div class="wrap">
@@ -55,22 +60,32 @@ class AITC_CSV_Importer {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( ! empty( $import_errors ) ) : ?>
+				<div class="notice notice-warning is-dismissible">
+					<p><?php esc_html_e( 'Some rows were skipped or had issues:', 'aitc-ai-tools' ); ?></p>
+					<ul>
+						<?php foreach ( $import_errors as $error ) : ?>
+							<li><?php echo esc_html( $error ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			<?php endif; ?>
+
 			<div class="card">
 				<h2><?php esc_html_e( 'CSV Format', 'aitc-ai-tools' ); ?></h2>
 				<p><?php esc_html_e( 'Your CSV file should contain the following columns (in any order):', 'aitc-ai-tools' ); ?></p>
-				<pre style="background: #f0f0f1; padding: 15px; overflow-x: auto;">title,excerpt,content,official_url,pricing_page_url,pricing_model,price_type,price_single_amount,price_range_low,price_range_high,billing_unit,has_free_plan,has_free_trial,trial_days,pricing_tiers_json,editor_rating_value,editor_review_summary,editor_features,editor_pros,editor_cons,category_slug,use_case,platform,ai_pricing_model,ai_billing_unit</pre>
+				<pre style="background: #f0f0f1; padding: 15px; overflow-x: auto;">tool_slug,tool_name,overview,key_features,best_use_cases,pricing_model,free_plan_available,pricing_notes,pricing_url,pros,cons,alternatives,faqs,excerpt,content,official_url,pricing_page_url,price_type,price_single_amount,price_range_low,price_range_high,billing_unit,has_free_plan,has_free_trial,trial_days,pricing_tiers_json,editor_rating_value,editor_review_summary,editor_features,editor_pros,editor_cons,category_slug,use_case,platform,ai_pricing_model,ai_billing_unit</pre>
 
 				<h3><?php esc_html_e( 'Field Notes:', 'aitc-ai-tools' ); ?></h3>
 				<ul>
-					<li><strong>title</strong> (required): Tool name</li>
-					<li><strong>excerpt</strong>: Short description</li>
-					<li><strong>content</strong>: Full description (HTML allowed)</li>
-					<li><strong>pricing_model</strong>: free|freemium|paid|usage|one_time|enterprise|open_source</li>
-					<li><strong>price_type</strong>: none|single|range|tiers</li>
-					<li><strong>has_free_plan, has_free_trial</strong>: 1 or 0</li>
-					<li><strong>pricing_tiers_json</strong>: JSON array of tier objects</li>
-					<li><strong>editor_rating_value</strong>: 1.0-5.0</li>
-					<li><strong>editor_features, editor_pros, editor_cons</strong>: Pipe-separated values (e.g., "Feature 1|Feature 2|Feature 3")</li>
+					<li><strong>tool_slug</strong> (required): Unique slug for the tool</li>
+					<li><strong>tool_name</strong> (required): Tool name (post title)</li>
+					<li><strong>overview</strong>: Short overview (HTML allowed)</li>
+					<li><strong>key_features, best_use_cases, pros, cons</strong>: Pipe-separated or newline-separated values</li>
+					<li><strong>alternatives</strong>: Comma-separated tool slugs (e.g., "make,n8n,ifttt")</li>
+					<li><strong>faqs</strong>: JSON array of objects [{"q":"...","a":"..."}]</li>
+					<li><strong>free_plan_available</strong>: 1/0, true/false, yes/no</li>
+					<li><strong>pricing_url</strong>: Full pricing page URL</li>
 					<li><strong>category_slug, use_case, platform, ai_pricing_model, ai_billing_unit</strong>: Comma-separated term slugs</li>
 				</ul>
 			</div>
@@ -96,7 +111,7 @@ class AITC_CSV_Importer {
 						<td>
 							<label>
 								<input type="checkbox" id="update_existing" name="update_existing" value="1">
-								<?php esc_html_e( 'Update existing tools with matching titles', 'aitc-ai-tools' ); ?>
+								<?php esc_html_e( 'Update existing tools with matching slugs', 'aitc-ai-tools' ); ?>
 							</label>
 						</td>
 					</tr>
@@ -128,8 +143,10 @@ class AITC_CSV_Importer {
 		}
 
 		$update_existing = isset( $_POST['update_existing'] );
+		$overwrite_empty_fields = get_option( 'aitc_ai_tools_overwrite_empty_fields', '0' ) === '1';
 		$file = $_FILES['csv_file']['tmp_name'];
 		$imported = 0;
+		$errors = array();
 
 		// Open CSV file
 		if ( ( $handle = fopen( $file, 'r' ) ) !== false ) {
@@ -144,18 +161,25 @@ class AITC_CSV_Importer {
 			$headers = array_map( 'trim', $headers );
 
 			// Process rows
+			$row_number = 1;
 			while ( ( $row = fgetcsv( $handle, 0, ',' ) ) !== false ) {
+				$row_number++;
 				if ( count( $row ) !== count( $headers ) ) {
+					$errors[] = sprintf( __( 'Row %d: column count mismatch.', 'aitc-ai-tools' ), $row_number );
 					continue; // Skip malformed rows
 				}
 
 				$data = array_combine( $headers, $row );
-				if ( self::import_tool( $data, $update_existing ) ) {
+				if ( self::import_tool( $data, $update_existing, $overwrite_empty_fields, $errors, $row_number ) ) {
 					$imported++;
 				}
 			}
 
 			fclose( $handle );
+		}
+
+		if ( ! empty( $errors ) ) {
+			set_transient( 'aitc_ai_tools_import_errors', $errors, 5 * MINUTE_IN_SECONDS );
 		}
 
 		// Redirect with success message
@@ -175,20 +199,29 @@ class AITC_CSV_Importer {
 	/**
 	 * Import single tool from CSV row
 	 */
-	private static function import_tool( $data, $update_existing = false ) {
-		$title = isset( $data['title'] ) ? sanitize_text_field( $data['title'] ) : '';
+	private static function import_tool( $data, $update_existing = false, $overwrite_empty_fields = false, &$errors = array(), $row_number = 0 ) {
+		$slug = isset( $data['tool_slug'] ) ? sanitize_title( $data['tool_slug'] ) : '';
+		$title = isset( $data['tool_name'] ) ? sanitize_text_field( $data['tool_name'] ) : '';
+
+		if ( empty( $slug ) ) {
+			self::add_import_error( $errors, $row_number, __( 'Missing tool_slug.', 'aitc-ai-tools' ) );
+			return false;
+		}
 		if ( empty( $title ) ) {
+			self::add_import_error( $errors, $row_number, __( 'Missing tool_name.', 'aitc-ai-tools' ) );
 			return false;
 		}
 
-		// Check if tool exists
-		$existing_post = get_page_by_title( $title, OBJECT, 'ai_tool' );
+		// Check if tool exists by slug
+		$existing_post = get_page_by_path( $slug, OBJECT, 'ai_tool' );
 		if ( $existing_post && ! $update_existing ) {
-			return false; // Skip existing
+			self::add_import_error( $errors, $row_number, __( 'Tool already exists and update is disabled.', 'aitc-ai-tools' ) );
+			return false;
 		}
 
 		$post_data = array(
 			'post_title'   => $title,
+			'post_name'    => $slug,
 			'post_excerpt' => isset( $data['excerpt'] ) ? sanitize_textarea_field( $data['excerpt'] ) : '',
 			'post_content' => isset( $data['content'] ) ? wp_kses_post( $data['content'] ) : '',
 			'post_type'    => 'ai_tool',
@@ -203,10 +236,26 @@ class AITC_CSV_Importer {
 		}
 
 		if ( ! $post_id || is_wp_error( $post_id ) ) {
+			self::add_import_error( $errors, $row_number, __( 'Failed to save post.', 'aitc-ai-tools' ) );
 			return false;
 		}
 
-		// Update meta fields
+		self::update_string_meta( $post_id, $data, 'overview', '_aitc_overview', 'wp_kses_post', $overwrite_empty_fields );
+		self::update_string_meta( $post_id, $data, 'pricing_model', '_aitc_pricing_model', 'sanitize_text_field', $overwrite_empty_fields );
+		self::update_string_meta( $post_id, $data, 'pricing_notes', '_aitc_pricing_notes', 'wp_kses_post', $overwrite_empty_fields );
+		self::update_string_meta( $post_id, $data, 'pricing_url', '_aitc_pricing_url', 'esc_url_raw', $overwrite_empty_fields );
+
+		self::update_json_list_meta( $post_id, $data, 'key_features', '_aitc_key_features', $overwrite_empty_fields );
+		self::update_json_list_meta( $post_id, $data, 'best_use_cases', '_aitc_best_use_cases', $overwrite_empty_fields );
+		self::update_json_list_meta( $post_id, $data, 'pros', '_aitc_pros', $overwrite_empty_fields );
+		self::update_json_list_meta( $post_id, $data, 'cons', '_aitc_cons', $overwrite_empty_fields );
+
+		self::update_json_alternatives_meta( $post_id, $data, 'alternatives', '_aitc_alternatives', $overwrite_empty_fields );
+		self::update_json_faqs_meta( $post_id, $data, 'faqs', '_aitc_faqs', $overwrite_empty_fields, $errors, $row_number );
+
+		self::update_bool_meta( $post_id, $data, 'free_plan_available', '_aitc_free_plan_available', $overwrite_empty_fields, $errors, $row_number );
+
+		// Legacy meta fields (if provided)
 		$meta_fields = array(
 			'official_url'          => 'esc_url_raw',
 			'pricing_page_url'      => 'esc_url_raw',
@@ -223,25 +272,27 @@ class AITC_CSV_Importer {
 		);
 
 		foreach ( $meta_fields as $field => $sanitize_callback ) {
-			if ( isset( $data[ $field ] ) && $data[ $field ] !== '' ) {
-				update_post_meta( $post_id, '_' . $field, call_user_func( $sanitize_callback, $data[ $field ] ) );
-			}
+			self::update_string_meta( $post_id, $data, $field, '_' . $field, $sanitize_callback, $overwrite_empty_fields );
 		}
 
-		// Boolean fields
-		if ( isset( $data['has_free_plan'] ) ) {
-			update_post_meta( $post_id, '_has_free_plan', $data['has_free_plan'] == 1 ? '1' : '0' );
+		// Legacy boolean fields
+		if ( array_key_exists( 'has_free_plan', $data ) ) {
+			self::update_bool_meta( $post_id, $data, 'has_free_plan', '_has_free_plan', $overwrite_empty_fields, $errors, $row_number );
 		}
-		if ( isset( $data['has_free_trial'] ) ) {
-			update_post_meta( $post_id, '_has_free_trial', $data['has_free_trial'] == 1 ? '1' : '0' );
+		if ( array_key_exists( 'has_free_trial', $data ) ) {
+			self::update_bool_meta( $post_id, $data, 'has_free_trial', '_has_free_trial', $overwrite_empty_fields, $errors, $row_number );
 		}
 
-		// Pipe-separated fields (features, pros, cons)
+		// Legacy pipe-separated fields
 		$list_fields = array( 'editor_features', 'editor_pros', 'editor_cons' );
 		foreach ( $list_fields as $field ) {
-			if ( isset( $data[ $field ] ) && $data[ $field ] !== '' ) {
-				$value = implode( "\n", array_map( 'trim', explode( '|', $data[ $field ] ) ) );
-				update_post_meta( $post_id, '_' . $field, sanitize_textarea_field( $value ) );
+			if ( array_key_exists( $field, $data ) ) {
+				$value = self::parse_list_field( $data[ $field ] );
+				if ( ! empty( $value ) ) {
+					update_post_meta( $post_id, '_' . $field, sanitize_textarea_field( implode( "\n", $value ) ) );
+				} elseif ( $overwrite_empty_fields ) {
+					delete_post_meta( $post_id, '_' . $field );
+				}
 			}
 		}
 
@@ -310,6 +361,162 @@ class AITC_CSV_Importer {
 		}
 
 		return true;
+	}
+
+	private static function update_string_meta( $post_id, $data, $field, $meta_key, $sanitize_callback, $overwrite_empty_fields ) {
+		if ( ! array_key_exists( $field, $data ) ) {
+			return;
+		}
+
+		$value = $data[ $field ];
+		if ( $value !== '' ) {
+			update_post_meta( $post_id, $meta_key, call_user_func( $sanitize_callback, $value ) );
+		} elseif ( $overwrite_empty_fields ) {
+			delete_post_meta( $post_id, $meta_key );
+		}
+	}
+
+	private static function update_bool_meta( $post_id, $data, $field, $meta_key, $overwrite_empty_fields, &$errors, $row_number ) {
+		if ( ! array_key_exists( $field, $data ) ) {
+			return;
+		}
+
+		$raw = trim( $data[ $field ] );
+		if ( $raw === '' ) {
+			if ( $overwrite_empty_fields ) {
+				delete_post_meta( $post_id, $meta_key );
+			}
+			return;
+		}
+
+		$parsed = self::parse_bool( $raw );
+		if ( null === $parsed ) {
+			self::add_import_error( $errors, $row_number, sprintf( __( 'Invalid boolean value for %s.', 'aitc-ai-tools' ), $field ) );
+			return;
+		}
+
+		update_post_meta( $post_id, $meta_key, $parsed ? '1' : '0' );
+	}
+
+	private static function update_json_list_meta( $post_id, $data, $field, $meta_key, $overwrite_empty_fields ) {
+		if ( ! array_key_exists( $field, $data ) ) {
+			return;
+		}
+
+		$list = self::parse_list_field( $data[ $field ] );
+		if ( ! empty( $list ) ) {
+			update_post_meta( $post_id, $meta_key, wp_json_encode( array_values( $list ) ) );
+		} elseif ( $overwrite_empty_fields ) {
+			delete_post_meta( $post_id, $meta_key );
+		}
+	}
+
+	private static function update_json_alternatives_meta( $post_id, $data, $field, $meta_key, $overwrite_empty_fields ) {
+		if ( ! array_key_exists( $field, $data ) ) {
+			return;
+		}
+
+		$raw = trim( $data[ $field ] );
+		if ( $raw === '' ) {
+			if ( $overwrite_empty_fields ) {
+				delete_post_meta( $post_id, $meta_key );
+			}
+			return;
+		}
+
+		$parts = array_map( 'trim', explode( ',', $raw ) );
+		$slugs = array();
+		foreach ( $parts as $part ) {
+			$slug = sanitize_title( $part );
+			if ( $slug ) {
+				$slugs[] = $slug;
+			}
+		}
+
+		if ( ! empty( $slugs ) ) {
+			update_post_meta( $post_id, $meta_key, wp_json_encode( array_values( $slugs ) ) );
+		} elseif ( $overwrite_empty_fields ) {
+			delete_post_meta( $post_id, $meta_key );
+		}
+	}
+
+	private static function update_json_faqs_meta( $post_id, $data, $field, $meta_key, $overwrite_empty_fields, &$errors, $row_number ) {
+		if ( ! array_key_exists( $field, $data ) ) {
+			return;
+		}
+
+		$raw = trim( $data[ $field ] );
+		if ( $raw === '' ) {
+			if ( $overwrite_empty_fields ) {
+				delete_post_meta( $post_id, $meta_key );
+			}
+			return;
+		}
+
+		$decoded = json_decode( $raw, true );
+		if ( ! is_array( $decoded ) ) {
+			self::add_import_error( $errors, $row_number, __( 'Invalid FAQs JSON. Skipped FAQs.', 'aitc-ai-tools' ) );
+			return;
+		}
+
+		$faqs = array();
+		foreach ( $decoded as $faq ) {
+			if ( ! is_array( $faq ) ) {
+				continue;
+			}
+			$question = isset( $faq['q'] ) ? trim( $faq['q'] ) : '';
+			$answer = isset( $faq['a'] ) ? trim( $faq['a'] ) : '';
+			if ( $question && $answer ) {
+				$faqs[] = array(
+					'q' => $question,
+					'a' => $answer,
+				);
+			}
+		}
+
+		if ( ! empty( $faqs ) ) {
+			update_post_meta( $post_id, $meta_key, wp_json_encode( $faqs ) );
+		} else {
+			self::add_import_error( $errors, $row_number, __( 'FAQs JSON contained no valid entries. Skipped FAQs.', 'aitc-ai-tools' ) );
+		}
+	}
+
+	private static function parse_list_field( $value ) {
+		$value = trim( (string) $value );
+		if ( $value === '' ) {
+			return array();
+		}
+
+		$parts = preg_split( "/\r\n|\n|\|/", $value );
+		$parts = array_map( 'trim', $parts );
+		$parts = array_filter( $parts, function( $part ) {
+			return $part !== '';
+		} );
+
+		return array_values( $parts );
+	}
+
+	private static function parse_bool( $value ) {
+		$value = strtolower( trim( (string) $value ) );
+		$truthy = array( '1', 'true', 'yes' );
+		$falsy  = array( '0', 'false', 'no' );
+
+		if ( in_array( $value, $truthy, true ) ) {
+			return true;
+		}
+		if ( in_array( $value, $falsy, true ) ) {
+			return false;
+		}
+
+		return null;
+	}
+
+	private static function add_import_error( &$errors, $row_number, $message ) {
+		if ( $row_number ) {
+			$errors[] = sprintf( __( 'Row %d: %s', 'aitc-ai-tools' ), $row_number, $message );
+		} else {
+			$errors[] = $message;
+		}
 	}
 
 	/**

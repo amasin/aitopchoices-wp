@@ -5,32 +5,132 @@
 
 get_header();
 
+if ( ! function_exists( 'aitc_decode_json_array' ) ) {
+	function aitc_decode_json_array( $value ) {
+		if ( empty( $value ) ) {
+			return array();
+		}
+		if ( is_array( $value ) ) {
+			return array_values( array_filter( $value ) );
+		}
+		$decoded = json_decode( $value, true );
+		if ( is_array( $decoded ) ) {
+			return array_values( array_filter( $decoded ) );
+		}
+		return array();
+	}
+}
+
+if ( ! function_exists( 'aitc_decode_faqs' ) ) {
+	function aitc_decode_faqs( $value ) {
+		$decoded = json_decode( (string) $value, true );
+		if ( ! is_array( $decoded ) ) {
+			return array();
+		}
+		$faqs = array();
+		foreach ( $decoded as $faq ) {
+			if ( is_array( $faq ) && ! empty( $faq['q'] ) && ! empty( $faq['a'] ) ) {
+				$faqs[] = array(
+					'q' => $faq['q'],
+					'a' => $faq['a'],
+				);
+			}
+		}
+		return $faqs;
+	}
+}
+
+if ( ! function_exists( 'aitc_get_primary_tool_category' ) ) {
+	function aitc_get_primary_tool_category( $post_id ) {
+		$categories = get_the_terms( $post_id, 'ai_tool_category' );
+		if ( ! $categories || is_wp_error( $categories ) ) {
+			return null;
+		}
+
+		foreach ( $categories as $category ) {
+			if ( ! is_numeric( $category->name ) && ! empty( trim( $category->name ) ) ) {
+				return $category;
+			}
+		}
+
+		return null;
+	}
+}
+
+if ( ! function_exists( 'aitc_get_tool_breadcrumbs' ) ) {
+	function aitc_get_tool_breadcrumbs( $post_id ) {
+		$items = array(
+			array(
+				'label' => __( 'Home', 'aitc-ai-tools' ),
+				'url'   => home_url( '/' ),
+			),
+			array(
+				'label' => __( 'AI Tools', 'aitc-ai-tools' ),
+				'url'   => get_post_type_archive_link( 'ai_tool' ),
+			),
+		);
+
+		$category = aitc_get_primary_tool_category( $post_id );
+		if ( $category ) {
+			$term_link = get_term_link( $category );
+			if ( ! is_wp_error( $term_link ) ) {
+				$items[] = array(
+					'label' => $category->name,
+					'url'   => $term_link,
+				);
+			}
+		}
+
+		$items[] = array(
+			'label' => get_the_title( $post_id ),
+			'url'   => '',
+		);
+
+		return $items;
+	}
+}
+
 while ( have_posts() ) :
 	the_post();
 
 	$post_id = get_the_ID();
 	$official_url = get_post_meta( $post_id, '_official_url', true );
-	$pricing_page_url = get_post_meta( $post_id, '_pricing_page_url', true );
-	$pricing_model = get_post_meta( $post_id, '_pricing_model', true );
-	$price_type = get_post_meta( $post_id, '_price_type', true );
-	$price_single = get_post_meta( $post_id, '_price_single_amount', true );
-	$price_range_low = get_post_meta( $post_id, '_price_range_low', true );
-	$price_range_high = get_post_meta( $post_id, '_price_range_high', true );
-	$billing_unit = get_post_meta( $post_id, '_billing_unit', true );
-	$has_free_plan = get_post_meta( $post_id, '_has_free_plan', true );
-	$has_free_trial = get_post_meta( $post_id, '_has_free_trial', true );
-	$trial_days = get_post_meta( $post_id, '_trial_days', true );
-	$pricing_tiers_json = get_post_meta( $post_id, '_pricing_tiers_json', true );
-	$editor_rating = get_post_meta( $post_id, '_editor_rating_value', true );
-	$editor_summary = get_post_meta( $post_id, '_editor_review_summary', true );
-	$editor_pros = get_post_meta( $post_id, '_editor_pros', true );
-	$editor_cons = get_post_meta( $post_id, '_editor_cons', true );
-	$editor_features = get_post_meta( $post_id, '_editor_features', true );
+	$overview = get_post_meta( $post_id, '_aitc_overview', true );
+	$key_features = aitc_decode_json_array( get_post_meta( $post_id, '_aitc_key_features', true ) );
+	$best_use_cases = aitc_decode_json_array( get_post_meta( $post_id, '_aitc_best_use_cases', true ) );
+	$pricing_model = get_post_meta( $post_id, '_aitc_pricing_model', true );
+	$free_plan_available = get_post_meta( $post_id, '_aitc_free_plan_available', true );
+	$pricing_notes = get_post_meta( $post_id, '_aitc_pricing_notes', true );
+	$pricing_url = get_post_meta( $post_id, '_aitc_pricing_url', true );
+	$pros = aitc_decode_json_array( get_post_meta( $post_id, '_aitc_pros', true ) );
+	$cons = aitc_decode_json_array( get_post_meta( $post_id, '_aitc_cons', true ) );
+	$alternatives = aitc_decode_json_array( get_post_meta( $post_id, '_aitc_alternatives', true ) );
+	$faqs = aitc_decode_faqs( get_post_meta( $post_id, '_aitc_faqs', true ) );
 	$rating_summary = AITC_Ratings::get_rating_summary( $post_id );
+	$breadcrumbs = aitc_get_tool_breadcrumbs( $post_id );
+	$primary_category = aitc_get_primary_tool_category( $post_id );
+	$has_pricing_section = $pricing_model || $free_plan_available || $pricing_notes || $pricing_url;
 	?>
 
 	<article id="post-<?php the_ID(); ?>" <?php post_class( 'aitc-single-tool' ); ?>>
 		<header class="entry-header">
+			<?php do_action( 'aitc_before_tool_title', $post_id, $breadcrumbs ); ?>
+			<?php if ( ! empty( $breadcrumbs ) ) : ?>
+				<nav class="aitc-breadcrumbs" hidden aria-label="<?php esc_attr_e( 'Breadcrumbs', 'aitc-ai-tools' ); ?>">
+					<ol>
+						<?php foreach ( $breadcrumbs as $breadcrumb ) : ?>
+							<li>
+								<?php if ( ! empty( $breadcrumb['url'] ) ) : ?>
+									<a href="<?php echo esc_url( $breadcrumb['url'] ); ?>"><?php echo esc_html( $breadcrumb['label'] ); ?></a>
+								<?php else : ?>
+									<span aria-current="page"><?php echo esc_html( $breadcrumb['label'] ); ?></span>
+								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ol>
+				</nav>
+			<?php endif; ?>
+
 			<h1 class="entry-title"><?php the_title(); ?></h1>
 
 			<?php if ( has_post_thumbnail() ) : ?>
@@ -48,143 +148,158 @@ while ( have_posts() ) :
 			<?php endif; ?>
 		</header>
 
-		<?php if ( has_excerpt() ) : ?>
-			<div class="entry-summary">
-				<?php the_excerpt(); ?>
-			</div>
-		<?php endif; ?>
-
 		<div class="entry-content">
-			<?php the_content(); ?>
-		</div>
+			<?php if ( $overview ) : ?>
+				<div class="aitc-overview">
+					<h2><?php esc_html_e( 'Overview', 'aitc-ai-tools' ); ?></h2>
+					<?php echo wpautop( wp_kses_post( $overview ) ); ?>
+				</div>
+			<?php endif; ?>
 
-		<?php if ( $pricing_model || $price_type !== 'none' ) : ?>
-			<div class="aitc-pricing-section">
-				<h2><?php esc_html_e( 'Pricing', 'aitc-ai-tools' ); ?></h2>
+			<?php if ( ! empty( $key_features ) ) : ?>
+				<div class="aitc-key-features">
+					<h2><?php esc_html_e( 'Key Features', 'aitc-ai-tools' ); ?></h2>
+					<ul>
+						<?php foreach ( $key_features as $feature ) : ?>
+							<li><?php echo esc_html( $feature ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			<?php endif; ?>
 
-				<?php if ( $pricing_model ) : ?>
-					<p><strong><?php esc_html_e( 'Pricing Model:', 'aitc-ai-tools' ); ?></strong> <?php echo esc_html( ucfirst( str_replace( '_', ' ', $pricing_model ) ) ); ?></p>
-				<?php endif; ?>
+			<?php if ( ! empty( $best_use_cases ) ) : ?>
+				<div class="aitc-best-use-cases">
+					<h2><?php esc_html_e( 'Best Use Cases', 'aitc-ai-tools' ); ?></h2>
+					<ul>
+						<?php foreach ( $best_use_cases as $use_case ) : ?>
+							<li><?php echo esc_html( $use_case ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			<?php endif; ?>
 
-				<?php if ( $price_type === 'single' && $price_single ) : ?>
-					<p class="aitc-price-display">
-						<strong>$<?php echo number_format( floatval( $price_single ), 2 ); ?> USD</strong>
-						<?php if ( $billing_unit ) : ?>
-							<span class="billing-unit">/ <?php echo esc_html( str_replace( '_', ' ', $billing_unit ) ); ?></span>
-						<?php endif; ?>
-					</p>
-				<?php elseif ( $price_type === 'range' && $price_range_low && $price_range_high ) : ?>
-					<p class="aitc-price-display">
-						<strong>$<?php echo number_format( floatval( $price_range_low ), 2 ); ?> - $<?php echo number_format( floatval( $price_range_high ), 2 ); ?> USD</strong>
-						<?php if ( $billing_unit ) : ?>
-							<span class="billing-unit">/ <?php echo esc_html( str_replace( '_', ' ', $billing_unit ) ); ?></span>
-						<?php endif; ?>
-					</p>
-				<?php elseif ( $price_type === 'tiers' && $pricing_tiers_json ) : ?>
-					<?php
-					$tiers = json_decode( $pricing_tiers_json, true );
-					if ( is_array( $tiers ) && ! empty( $tiers ) ) :
-						?>
-						<div class="aitc-pricing-tiers">
-							<?php foreach ( $tiers as $tier ) : ?>
-								<div class="pricing-tier">
-									<?php if ( isset( $tier['name'] ) ) : ?>
-										<h3><?php echo esc_html( $tier['name'] ); ?></h3>
-									<?php endif; ?>
-									<?php if ( isset( $tier['amount'] ) ) : ?>
-										<p class="tier-price">
-											<strong>$<?php echo number_format( floatval( $tier['amount'] ), 2 ); ?> <?php echo esc_html( $tier['currency'] ?? 'USD' ); ?></strong>
-											<?php if ( isset( $tier['unit'] ) ) : ?>
-												<span class="billing-unit">/ <?php echo esc_html( $tier['unit'] ); ?></span>
-											<?php endif; ?>
-										</p>
-									<?php endif; ?>
-									<?php if ( isset( $tier['notes'] ) && $tier['notes'] ) : ?>
-										<p class="tier-notes"><?php echo esc_html( $tier['notes'] ); ?></p>
-									<?php endif; ?>
-								</div>
-							<?php endforeach; ?>
+			<?php if ( $has_pricing_section ) : ?>
+				<div class="aitc-pricing-section">
+					<h2><?php esc_html_e( 'Pricing & Plans', 'aitc-ai-tools' ); ?></h2>
+
+					<?php if ( $pricing_model ) : ?>
+						<p><strong><?php esc_html_e( 'Pricing Model:', 'aitc-ai-tools' ); ?></strong> <?php echo esc_html( $pricing_model ); ?></p>
+					<?php endif; ?>
+
+					<?php if ( $free_plan_available ) : ?>
+						<p class="aitc-free-plan">✓ <?php esc_html_e( 'Free plan available', 'aitc-ai-tools' ); ?></p>
+					<?php endif; ?>
+
+					<?php if ( $pricing_notes ) : ?>
+						<div class="aitc-pricing-notes">
+							<?php echo wpautop( wp_kses_post( $pricing_notes ) ); ?>
 						</div>
 					<?php endif; ?>
-				<?php endif; ?>
 
-				<?php if ( $has_free_plan ) : ?>
-					<p class="aitc-free-plan">✓ <?php esc_html_e( 'Free plan available', 'aitc-ai-tools' ); ?></p>
-				<?php endif; ?>
+					<?php if ( $pricing_url ) : ?>
+						<p><a href="<?php echo esc_url( $pricing_url ); ?>" target="_blank" rel="nofollow noopener"><?php esc_html_e( 'View pricing details', 'aitc-ai-tools' ); ?> &rarr;</a></p>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 
-				<?php if ( $has_free_trial ) : ?>
-					<p class="aitc-free-trial">
-						✓ <?php esc_html_e( 'Free trial available', 'aitc-ai-tools' ); ?>
-						<?php if ( $trial_days ) : ?>
-							(<?php echo absint( $trial_days ); ?> <?php esc_html_e( 'days', 'aitc-ai-tools' ); ?>)
-						<?php endif; ?>
-					</p>
-				<?php endif; ?>
+			<?php if ( ! empty( $pros ) || ! empty( $cons ) ) : ?>
+				<div class="aitc-pros-cons">
+					<h2><?php esc_html_e( 'Pros & Cons', 'aitc-ai-tools' ); ?></h2>
 
-				<?php if ( $pricing_page_url ) : ?>
-					<p><a href="<?php echo esc_url( $pricing_page_url ); ?>" target="_blank" rel="nofollow noopener"><?php esc_html_e( 'View full pricing details', 'aitc-ai-tools' ); ?> &rarr;</a></p>
-				<?php endif; ?>
-			</div>
-		<?php endif; ?>
+					<?php if ( ! empty( $pros ) ) : ?>
+						<div class="aitc-pros">
+							<h3><?php esc_html_e( 'Pros', 'aitc-ai-tools' ); ?></h3>
+							<ul>
+								<?php foreach ( $pros as $pro ) : ?>
+									<li><?php echo esc_html( $pro ); ?></li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					<?php endif; ?>
 
-		<?php if ( $editor_rating || $editor_summary || $editor_pros || $editor_cons || $editor_features ) : ?>
-			<div class="aitc-editorial-review">
-				<h2><?php esc_html_e( 'Our Review', 'aitc-ai-tools' ); ?></h2>
+					<?php if ( ! empty( $cons ) ) : ?>
+						<div class="aitc-cons">
+							<h3><?php esc_html_e( 'Cons', 'aitc-ai-tools' ); ?></h3>
+							<ul>
+								<?php foreach ( $cons as $con ) : ?>
+									<li><?php echo esc_html( $con ); ?></li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 
-				<?php if ( $editor_rating ) : ?>
-					<div class="aitc-editor-rating">
-						<strong><?php esc_html_e( 'Editor Rating:', 'aitc-ai-tools' ); ?></strong>
-						<span class="rating-value"><?php echo number_format( floatval( $editor_rating ), 1 ); ?>/5.0</span>
-						<span class="rating-stars"><?php echo str_repeat( '★', round( floatval( $editor_rating ) ) ) . str_repeat( '☆', 5 - round( floatval( $editor_rating ) ) ); ?></span>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( $editor_summary ) : ?>
-					<div class="editor-summary">
-						<?php echo wpautop( esc_html( $editor_summary ) ); ?>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( $editor_features ) : ?>
-					<div class="editor-features">
-						<h3><?php esc_html_e( 'Key Features', 'aitc-ai-tools' ); ?></h3>
+			<?php if ( ! empty( $alternatives ) ) : ?>
+				<?php
+				$alternative_posts = get_posts(
+					array(
+						'post_type'      => 'ai_tool',
+						'post_status'    => 'publish',
+						'posts_per_page' => -1,
+						'post_name__in'  => $alternatives,
+						'orderby'        => 'post_name__in',
+					)
+				);
+				$alternative_map = array();
+				foreach ( $alternative_posts as $alternative_post ) {
+					$alternative_map[ $alternative_post->post_name ] = $alternative_post;
+				}
+				?>
+				<?php if ( ! empty( $alternative_map ) ) : ?>
+					<div class="aitc-alternatives">
+						<h2><?php esc_html_e( 'Alternatives', 'aitc-ai-tools' ); ?></h2>
 						<ul>
-							<?php foreach ( explode( "\n", $editor_features ) as $feature ) : ?>
-								<?php if ( trim( $feature ) ) : ?>
-									<li><?php echo esc_html( trim( $feature ) ); ?></li>
+							<?php foreach ( $alternatives as $slug ) : ?>
+								<?php if ( isset( $alternative_map[ $slug ] ) ) : ?>
+									<li>
+										<a href="<?php echo esc_url( get_permalink( $alternative_map[ $slug ]->ID ) ); ?>">
+											<?php echo esc_html( get_the_title( $alternative_map[ $slug ]->ID ) ); ?>
+										</a>
+									</li>
 								<?php endif; ?>
 							<?php endforeach; ?>
 						</ul>
 					</div>
 				<?php endif; ?>
+			<?php endif; ?>
 
-				<?php if ( $editor_pros ) : ?>
-					<div class="editor-pros">
-						<h3><?php esc_html_e( 'Pros', 'aitc-ai-tools' ); ?></h3>
+			<?php do_action( 'aitc_after_alternatives', $post_id ); ?>
+
+			<?php if ( $primary_category ) : ?>
+				<?php
+				$related_tools = get_posts(
+					array(
+						'post_type'      => 'ai_tool',
+						'post_status'    => 'publish',
+						'posts_per_page' => 4,
+						'post__not_in'   => array( $post_id ),
+						'tax_query'      => array(
+							array(
+								'taxonomy' => 'ai_tool_category',
+								'field'    => 'term_id',
+								'terms'    => array( $primary_category->term_id ),
+							),
+						),
+					)
+				);
+				?>
+				<?php if ( ! empty( $related_tools ) ) : ?>
+					<div class="aitc-related-tools">
+						<h2><?php esc_html_e( 'Related AI Tools', 'aitc-ai-tools' ); ?></h2>
 						<ul>
-							<?php foreach ( explode( "\n", $editor_pros ) as $pro ) : ?>
-								<?php if ( trim( $pro ) ) : ?>
-									<li>✓ <?php echo esc_html( trim( $pro ) ); ?></li>
-								<?php endif; ?>
+							<?php foreach ( $related_tools as $related_tool ) : ?>
+								<li>
+									<a href="<?php echo esc_url( get_permalink( $related_tool->ID ) ); ?>">
+										<?php echo esc_html( get_the_title( $related_tool->ID ) ); ?>
+									</a>
+								</li>
 							<?php endforeach; ?>
 						</ul>
 					</div>
 				<?php endif; ?>
-
-				<?php if ( $editor_cons ) : ?>
-					<div class="editor-cons">
-						<h3><?php esc_html_e( 'Cons', 'aitc-ai-tools' ); ?></h3>
-						<ul>
-							<?php foreach ( explode( "\n", $editor_cons ) as $con ) : ?>
-								<?php if ( trim( $con ) ) : ?>
-									<li>✗ <?php echo esc_html( trim( $con ) ); ?></li>
-								<?php endif; ?>
-							<?php endforeach; ?>
-						</ul>
-					</div>
-				<?php endif; ?>
-			</div>
-		<?php endif; ?>
+			<?php endif; ?>
+		</div>
 
 		<div class="aitc-user-ratings">
 			<h2><?php esc_html_e( 'User Reviews', 'aitc-ai-tools' ); ?></h2>
@@ -245,7 +360,7 @@ while ( have_posts() ) :
 						<textarea id="aitc-review-text" name="review_text" rows="5"></textarea>
 					</div>
 
-					<div class="form-field" style="display:none;">
+					<div class="form-field" hidden>
 						<label for="aitc-website"><?php esc_html_e( 'Website:', 'aitc-ai-tools' ); ?></label>
 						<input type="text" id="aitc-website" name="website" tabindex="-1" autocomplete="off">
 					</div>
@@ -260,6 +375,18 @@ while ( have_posts() ) :
 				</form>
 			</div>
 		</div>
+
+		<?php if ( ! empty( $faqs ) ) : ?>
+			<div class="aitc-faqs">
+				<h2><?php esc_html_e( 'FAQs', 'aitc-ai-tools' ); ?></h2>
+				<?php foreach ( $faqs as $faq ) : ?>
+					<div class="aitc-faq-item">
+						<h3><?php echo esc_html( $faq['q'] ); ?></h3>
+						<?php echo wpautop( wp_kses_post( $faq['a'] ) ); ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 
 		<footer class="entry-footer">
 			<?php

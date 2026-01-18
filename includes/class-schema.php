@@ -51,7 +51,10 @@ class AITC_Schema {
 		);
 
 		// Description
-		if ( $post->post_excerpt ) {
+		$overview = get_post_meta( $post->ID, '_aitc_overview', true );
+		if ( $overview ) {
+			$schema['description'] = wp_strip_all_tags( $overview );
+		} elseif ( $post->post_excerpt ) {
 			$schema['description'] = wp_strip_all_tags( $post->post_excerpt );
 		} elseif ( $post->post_content ) {
 			$schema['description'] = wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
@@ -97,31 +100,7 @@ class AITC_Schema {
 		}
 
 		// Ratings
-		$editor_rating = get_post_meta( $post->ID, '_editor_rating_value', true );
 		$rating_summary = AITC_Ratings::get_rating_summary( $post->ID );
-
-		// Editorial review
-		if ( $editor_rating ) {
-			$editor_review_summary = get_post_meta( $post->ID, '_editor_review_summary', true );
-
-			$schema['review'] = array(
-				'@type'         => 'Review',
-				'reviewRating'  => array(
-					'@type'       => 'Rating',
-					'ratingValue' => floatval( $editor_rating ),
-					'bestRating'  => 5,
-					'worstRating' => 1,
-				),
-				'author'        => array(
-					'@type' => 'Organization',
-					'name'  => 'AI Top Choices',
-				),
-			);
-
-			if ( $editor_review_summary ) {
-				$schema['review']['reviewBody'] = $editor_review_summary;
-			}
-		}
 
 		// Aggregate rating (only if >= 5 approved ratings)
 		if ( $rating_summary && $rating_summary->count >= 5 ) {
@@ -134,103 +113,178 @@ class AITC_Schema {
 			);
 		}
 
+		$reviews = AITC_Ratings::get_approved_reviews( $post->ID, 5 );
+		if ( ! empty( $reviews ) ) {
+			$review_schema = array();
+			foreach ( $reviews as $review ) {
+				$review_item = array(
+					'@type'        => 'Review',
+					'reviewRating' => array(
+						'@type'       => 'Rating',
+						'ratingValue' => floatval( $review->rating ),
+						'bestRating'  => 5,
+						'worstRating' => 1,
+					),
+					'author'       => array(
+						'@type' => 'Person',
+						'name'  => $review->display_name ? wp_strip_all_tags( $review->display_name ) : __( 'Guest', 'aitc-ai-tools' ),
+					),
+				);
+
+				$review_body = $review->review_text ? wp_strip_all_tags( $review->review_text ) : '';
+				if ( $review_body ) {
+					$review_item['reviewBody'] = $review_body;
+				}
+
+				$review_title = $review->review_title ? wp_strip_all_tags( $review->review_title ) : '';
+				if ( $review_title ) {
+					$review_item['name'] = $review_title;
+				}
+
+				$review_schema[] = $review_item;
+			}
+			$schema['review'] = $review_schema;
+		}
+
 		echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
+
+		self::output_breadcrumb_schema( $post->ID );
+		self::output_faq_schema( $post->ID );
 	}
 
 	/**
 	 * Get pricing offers for schema
 	 */
 	private static function get_pricing_offers( $post_id ) {
-		$pricing_model = get_post_meta( $post_id, '_pricing_model', true );
-		$price_type    = get_post_meta( $post_id, '_price_type', true );
-		$pricing_page_url = get_post_meta( $post_id, '_pricing_page_url', true );
-		$official_url  = get_post_meta( $post_id, '_official_url', true );
-		$offer_url     = $pricing_page_url ? $pricing_page_url : $official_url;
+		$pricing_model = get_post_meta( $post_id, '_aitc_pricing_model', true );
+		$free_plan_available = get_post_meta( $post_id, '_aitc_free_plan_available', true );
+		$pricing_url = get_post_meta( $post_id, '_aitc_pricing_url', true );
+		$official_url = get_post_meta( $post_id, '_official_url', true );
+		$offer_url = $pricing_url ? $pricing_url : $official_url;
 
-		// Free tools
-		if ( $pricing_model === 'free' || $pricing_model === 'open_source' ) {
-			return array(
-				'@type'         => 'Offer',
-				'price'         => 0,
-				'priceCurrency' => 'USD',
-				'url'           => $offer_url,
+		$is_free = false;
+		if ( $free_plan_available ) {
+			$is_free = true;
+		} elseif ( $pricing_model ) {
+			$is_free = strtolower( $pricing_model ) === 'free';
+		}
+
+		$offer = array(
+			'@type'        => 'Offer',
+			'availability' => 'https://schema.org/OnlineOnly',
+		);
+
+		if ( $offer_url ) {
+			$offer['url'] = $offer_url;
+		}
+
+		if ( $is_free ) {
+			$offer['price'] = '0';
+			$offer['priceCurrency'] = 'USD';
+		}
+
+		return $offer;
+	}
+
+	/**
+	 * Output BreadcrumbList schema for AI tool
+	 */
+	private static function output_breadcrumb_schema( $post_id ) {
+		$items = array();
+
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => 1,
+			'name'     => __( 'Home', 'aitc-ai-tools' ),
+			'item'     => home_url( '/' ),
+		);
+
+		$archive_link = get_post_type_archive_link( 'ai_tool' );
+		if ( $archive_link ) {
+			$items[] = array(
+				'@type'    => 'ListItem',
+				'position' => 2,
+				'name'     => __( 'AI Tools', 'aitc-ai-tools' ),
+				'item'     => $archive_link,
 			);
 		}
 
-		// Enterprise / Contact sales
-		if ( $pricing_model === 'enterprise' || $price_type === 'none' ) {
-			return array(
-				'@type'       => 'Offer',
-				'url'         => $offer_url,
-				'description' => 'Contact sales for pricing',
+		$categories = get_the_terms( $post_id, 'ai_tool_category' );
+		$position = 3;
+		if ( $categories && ! is_wp_error( $categories ) ) {
+			foreach ( $categories as $category ) {
+				if ( is_numeric( $category->name ) || empty( trim( $category->name ) ) ) {
+					continue;
+				}
+				$term_link = get_term_link( $category );
+				if ( ! is_wp_error( $term_link ) ) {
+					$items[] = array(
+						'@type'    => 'ListItem',
+						'position' => $position++,
+						'name'     => $category->name,
+						'item'     => $term_link,
+					);
+				}
+				break;
+			}
+		}
+
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $position,
+			'name'     => get_the_title( $post_id ),
+			'item'     => get_permalink( $post_id ),
+		);
+
+		$schema = array(
+			'@context'        => 'https://schema.org',
+			'@type'           => 'BreadcrumbList',
+			'itemListElement' => $items,
+		);
+
+		echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
+	}
+
+	/**
+	 * Output FAQPage schema for AI tool
+	 */
+	private static function output_faq_schema( $post_id ) {
+		$faqs_json = get_post_meta( $post_id, '_aitc_faqs', true );
+		if ( ! $faqs_json ) {
+			return;
+		}
+
+		$faqs = json_decode( $faqs_json, true );
+		if ( ! is_array( $faqs ) ) {
+			return;
+		}
+
+		$entities = array();
+		foreach ( $faqs as $faq ) {
+			if ( ! is_array( $faq ) || empty( $faq['q'] ) || empty( $faq['a'] ) ) {
+				continue;
+			}
+			$entities[] = array(
+				'@type'          => 'Question',
+				'name'           => wp_strip_all_tags( $faq['q'] ),
+				'acceptedAnswer' => array(
+					'@type' => 'Answer',
+					'text'  => wp_kses_post( $faq['a'] ),
+				),
 			);
 		}
 
-		// Single price
-		if ( $price_type === 'single' ) {
-			$price = get_post_meta( $post_id, '_price_single_amount', true );
-			if ( $price ) {
-				return array(
-					'@type'         => 'Offer',
-					'price'         => floatval( $price ),
-					'priceCurrency' => 'USD',
-					'url'           => $offer_url,
-				);
-			}
+		if ( empty( $entities ) ) {
+			return;
 		}
 
-		// Range or tiers
-		if ( $price_type === 'range' || $price_type === 'tiers' ) {
-			$low  = 0;
-			$high = 0;
-			$offers_array = array();
+		$schema = array(
+			'@context'    => 'https://schema.org',
+			'@type'       => 'FAQPage',
+			'mainEntity'  => $entities,
+		);
 
-			if ( $price_type === 'range' ) {
-				$low  = get_post_meta( $post_id, '_price_range_low', true );
-				$high = get_post_meta( $post_id, '_price_range_high', true );
-			} elseif ( $price_type === 'tiers' ) {
-				$tiers_json = get_post_meta( $post_id, '_pricing_tiers_json', true );
-				$tiers = json_decode( $tiers_json, true );
-
-				if ( is_array( $tiers ) && ! empty( $tiers ) ) {
-					$prices = array_column( $tiers, 'amount' );
-					$low  = min( $prices );
-					$high = max( $prices );
-
-					// Add up to 5 tiers to offers array
-					foreach ( array_slice( $tiers, 0, 5 ) as $tier ) {
-						if ( isset( $tier['amount'] ) ) {
-							$offers_array[] = array(
-								'@type'         => 'Offer',
-								'name'          => $tier['name'] ?? '',
-								'price'         => floatval( $tier['amount'] ),
-								'priceCurrency' => $tier['currency'] ?? 'USD',
-								'url'           => $offer_url,
-							);
-						}
-					}
-				}
-			}
-
-			if ( $low && $high ) {
-				$aggregate = array(
-					'@type'         => 'AggregateOffer',
-					'lowPrice'      => floatval( $low ),
-					'highPrice'     => floatval( $high ),
-					'priceCurrency' => 'USD',
-					'url'           => $offer_url,
-				);
-
-				if ( ! empty( $offers_array ) ) {
-					$aggregate['offerCount'] = count( $offers_array );
-					$aggregate['offers'] = $offers_array;
-				}
-
-				return $aggregate;
-			}
-		}
-
-		return null;
+		echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
 	}
 
 	/**
