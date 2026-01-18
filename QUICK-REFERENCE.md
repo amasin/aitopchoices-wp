@@ -145,7 +145,7 @@ templates/
 |-----------|-------------|
 | Archive | `/ai-tools/` |
 | Single Tool | `/ai-tools/chatgpt/` |
-| Category | `/ai-tools/chatbots/` |
+| Category | `/ai-tool-category/chatbots/` |
 | Use Case | `/ai-use-case/content-creation/` |
 | Platform | `/ai-platform/web/` |
 
@@ -292,7 +292,7 @@ aitc_ai_tools_schema_enabled
 
 1. **Archive:** `https://yourdomain.com/ai-tools/`
 2. **Single:** `https://yourdomain.com/ai-tools/chatgpt/`
-3. **Category:** `https://yourdomain.com/ai-tools/chatbots/`
+3. **Category:** `https://yourdomain.com/ai-tool-category/chatbots/`
 4. **Schema Test:** [Google Rich Results Test](https://search.google.com/test/rich-results)
 
 ---

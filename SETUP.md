@@ -55,7 +55,7 @@ This imports 10 pre-configured AI tools (ChatGPT, Midjourney, Grammarly, etc.)
 Visit these URLs:
 - Archive: `https://yoursite.com/ai-tools/`
 - Single: `https://yoursite.com/ai-tools/chatgpt/`
-- Category: `https://yoursite.com/ai-tools/chatbots/`
+- Category: `https://yoursite.com/ai-tool-category/chatbots/`
 
 ---
 

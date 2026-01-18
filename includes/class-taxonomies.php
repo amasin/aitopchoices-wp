@@ -44,7 +44,10 @@ class AITC_Taxonomies {
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'ai-tools' ),
+			'rewrite'           => array(
+				'slug'       => 'ai-tool-category',
+				'with_front' => false,
+			),
 			'show_in_rest'      => true,
 		);
 

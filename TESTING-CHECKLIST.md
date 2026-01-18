@@ -286,7 +286,7 @@
 
 ### Category Archive:
 - [ ] Click "Chatbots" category link
-- [ ] Verify URL is `/ai-tools/chatbots/`
+- [ ] Verify URL is `/ai-tool-category/chatbots/`
 - [ ] Verify page heading shows "Chatbots"
 - [ ] Confirm ChatGPT tool displays
 
