@@ -63,8 +63,14 @@ class AITC_Schema {
 		// Category
 		$categories = get_the_terms( $post->ID, 'ai_tool_category' );
 		if ( $categories && ! is_wp_error( $categories ) ) {
-			$category = reset( $categories );
-			$schema['applicationCategory'] = $category->name;
+			// Filter out invalid categories (numeric names are bad data from imports)
+			$valid_categories = array_filter( $categories, function( $cat ) {
+				return ! is_numeric( $cat->name ) && ! empty( trim( $cat->name ) );
+			} );
+			if ( ! empty( $valid_categories ) ) {
+				$category = reset( $valid_categories );
+				$schema['applicationCategory'] = $category->name;
+			}
 		}
 
 		// Image

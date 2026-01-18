@@ -265,17 +265,23 @@ while ( have_posts() ) :
 			<?php
 			$categories = get_the_terms( $post_id, 'ai_tool_category' );
 			if ( $categories && ! is_wp_error( $categories ) ) :
+				// Filter out invalid categories (numeric names are bad data from imports)
+				$valid_categories = array_filter( $categories, function( $cat ) {
+					return ! is_numeric( $cat->name ) && ! empty( trim( $cat->name ) );
+				} );
+				if ( ! empty( $valid_categories ) ) :
 				?>
 				<div class="tool-categories">
 					<strong><?php esc_html_e( 'Categories:', 'aitc-ai-tools' ); ?></strong>
 					<?php
 					$category_links = array();
-					foreach ( $categories as $category ) {
+					foreach ( $valid_categories as $category ) {
 						$category_links[] = '<a href="' . esc_url( get_term_link( $category ) ) . '">' . esc_html( $category->name ) . '</a>';
 					}
 					echo implode( ', ', $category_links );
 					?>
 				</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</footer>
 	</article>

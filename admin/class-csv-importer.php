@@ -260,18 +260,36 @@ class AITC_CSV_Importer {
 				$term_ids = array();
 
 				foreach ( $terms as $term_slug ) {
+					// Skip empty values
+					if ( empty( $term_slug ) ) {
+						continue;
+					}
+
+					// Skip purely numeric values - these are bad data (e.g., term IDs, column errors)
+					if ( is_numeric( $term_slug ) ) {
+						continue;
+					}
+
+					// Sanitize the slug to ensure it's valid
+					$term_slug = sanitize_title( $term_slug );
+					if ( empty( $term_slug ) ) {
+						continue;
+					}
+
 					$term = term_exists( $term_slug, $taxonomy );
 					if ( ! $term ) {
 						// Create term if it doesn't exist
-						$term = wp_insert_term( ucfirst( str_replace( '-', ' ', $term_slug ) ), $taxonomy, array( 'slug' => $term_slug ) );
+						// Generate readable name from slug (e.g., "image-design" -> "Image Design")
+						$term_name = ucwords( str_replace( array( '-', '_' ), ' ', $term_slug ) );
+						$term = wp_insert_term( $term_name, $taxonomy, array( 'slug' => $term_slug ) );
 					}
 					if ( ! is_wp_error( $term ) ) {
-						$term_ids[] = is_array( $term ) ? $term['term_id'] : $term;
+						$term_ids[] = (int) ( is_array( $term ) ? $term['term_id'] : $term );
 					}
 				}
 
 				if ( ! empty( $term_ids ) ) {
-					wp_set_object_terms( $post_id, $term_ids, $taxonomy );
+					wp_set_object_terms( $post_id, array_map( 'intval', $term_ids ), $taxonomy );
 				}
 			}
 		}
