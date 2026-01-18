@@ -288,8 +288,23 @@ class AITC_CSV_Importer {
 					}
 				}
 
-				if ( ! empty( $term_ids ) ) {
-					wp_set_object_terms( $post_id, array_map( 'intval', $term_ids ), $taxonomy );
+				// Always set terms (replaces existing) - even empty array clears bad terms
+				wp_set_object_terms( $post_id, array_map( 'intval', $term_ids ), $taxonomy );
+			} elseif ( $update_existing ) {
+				// When updating and CSV field is empty, clear any invalid numeric-named terms
+				$existing_terms = get_the_terms( $post_id, $taxonomy );
+				if ( $existing_terms && ! is_wp_error( $existing_terms ) ) {
+					$valid_term_ids = array();
+					foreach ( $existing_terms as $term ) {
+						// Keep only terms with non-numeric names
+						if ( ! is_numeric( $term->name ) && ! empty( trim( $term->name ) ) ) {
+							$valid_term_ids[] = $term->term_id;
+						}
+					}
+					// If we filtered out any bad terms, update
+					if ( count( $valid_term_ids ) !== count( $existing_terms ) ) {
+						wp_set_object_terms( $post_id, $valid_term_ids, $taxonomy );
+					}
 				}
 			}
 		}
