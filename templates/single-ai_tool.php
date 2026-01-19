@@ -116,7 +116,7 @@ while ( have_posts() ) :
 		<header class="entry-header">
 			<?php do_action( 'aitc_before_tool_title', $post_id, $breadcrumbs ); ?>
 			<?php if ( ! empty( $breadcrumbs ) ) : ?>
-				<nav class="aitc-breadcrumbs" hidden aria-label="<?php esc_attr_e( 'Breadcrumbs', 'aitc-ai-tools' ); ?>">
+				<nav class="aitc-breadcrumbs" aria-label="<?php esc_attr_e( 'Breadcrumbs', 'aitc-ai-tools' ); ?>">
 					<ol>
 						<?php foreach ( $breadcrumbs as $breadcrumb ) : ?>
 							<li>
