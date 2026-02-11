@@ -1,114 +1,817 @@
 /**
- * Frontend ratings and review styles
+ * AI Tools Plugin - Frontend Styles
+ * Mobile-first, modern design system
  */
 
-/* Rating summary */
-.aitc-rating-summary {
-	margin: 20px 0;
-	padding: 20px;
-	background: #f9f9f9;
-	border-radius: 4px;
+/* ==========================================================================
+   Design Tokens
+   ========================================================================== */
+:root {
+	--aitc-color-primary: #2563eb;
+	--aitc-color-primary-hover: #1d4ed8;
+	--aitc-color-primary-light: #eff6ff;
+	--aitc-color-success: #16a34a;
+	--aitc-color-success-light: #f0fdf4;
+	--aitc-color-success-border: #bbf7d0;
+	--aitc-color-danger: #dc2626;
+	--aitc-color-danger-light: #fef2f2;
+	--aitc-color-danger-border: #fecaca;
+	--aitc-color-warning: #ea580c;
+	--aitc-color-star: #f59e0b;
+	--aitc-color-text: #1e293b;
+	--aitc-color-text-secondary: #64748b;
+	--aitc-color-text-muted: #94a3b8;
+	--aitc-color-border: #e2e8f0;
+	--aitc-color-bg: #ffffff;
+	--aitc-color-bg-subtle: #f8fafc;
+	--aitc-color-bg-muted: #f1f5f9;
+	--aitc-radius-sm: 0.375rem;
+	--aitc-radius-md: 0.5rem;
+	--aitc-radius-lg: 0.75rem;
+	--aitc-radius-xl: 1rem;
+	--aitc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+	--aitc-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+	--aitc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+	--aitc-font-size-xs: 0.75rem;
+	--aitc-font-size-sm: 0.875rem;
+	--aitc-font-size-base: 1rem;
+	--aitc-font-size-lg: 1.125rem;
+	--aitc-font-size-xl: 1.25rem;
+	--aitc-font-size-2xl: 1.5rem;
+	--aitc-font-size-3xl: 2rem;
+	--aitc-space-xs: 0.25rem;
+	--aitc-space-sm: 0.5rem;
+	--aitc-space-md: 1rem;
+	--aitc-space-lg: 1.5rem;
+	--aitc-space-xl: 2rem;
+	--aitc-space-2xl: 3rem;
 }
 
-.aitc-rating-summary .average-rating {
+/* ==========================================================================
+   Shared Components
+   ========================================================================== */
+
+/* Buttons */
+.aitc-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--aitc-space-sm);
+	padding: 0.75rem 1.5rem;
+	font-size: var(--aitc-font-size-sm);
+	font-weight: 600;
+	line-height: 1.25;
+	text-decoration: none;
+	border: 2px solid transparent;
+	border-radius: var(--aitc-radius-md);
+	cursor: pointer;
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+	min-height: 2.75rem;
+}
+
+.aitc-btn:focus-visible {
+	outline: 2px solid var(--aitc-color-primary);
+	outline-offset: 2px;
+}
+
+.aitc-btn--primary {
+	background: var(--aitc-color-primary);
+	color: #fff;
+}
+
+.aitc-btn--primary:hover {
+	background: var(--aitc-color-primary-hover);
+	color: #fff;
+}
+
+.aitc-btn--secondary {
+	background: var(--aitc-color-bg-muted);
+	color: var(--aitc-color-text);
+	border-color: var(--aitc-color-border);
+}
+
+.aitc-btn--secondary:hover {
+	background: var(--aitc-color-border);
+	color: var(--aitc-color-text);
+}
+
+.aitc-btn--outline {
+	background: transparent;
+	color: var(--aitc-color-primary);
+	border-color: var(--aitc-color-primary);
+}
+
+.aitc-btn--outline:hover {
+	background: var(--aitc-color-primary-light);
+	color: var(--aitc-color-primary);
+}
+
+.aitc-btn--full {
+	width: 100%;
+}
+
+/* Badges */
+.aitc-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.25rem 0.625rem;
+	font-size: var(--aitc-font-size-xs);
+	font-weight: 600;
+	line-height: 1.4;
+	border-radius: 100px;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.aitc-badge--category {
+	background: var(--aitc-color-primary-light);
+	color: var(--aitc-color-primary);
+}
+
+.aitc-badge--category:hover {
+	background: var(--aitc-color-primary);
+	color: #fff;
+}
+
+.aitc-badge--pricing {
+	background: var(--aitc-color-bg-muted);
+	color: var(--aitc-color-text-secondary);
+}
+
+.aitc-badge--free {
+	background: var(--aitc-color-success-light);
+	color: var(--aitc-color-success);
+}
+
+.aitc-badge--sm {
+	padding: 0.125rem 0.5rem;
+	font-size: 0.6875rem;
+}
+
+.aitc-badge--verified {
+	background: var(--aitc-color-success-light);
+	color: var(--aitc-color-success);
+	font-size: 0.6875rem;
+}
+
+/* Stars */
+.aitc-stars {
+	display: inline-flex;
+	gap: 1px;
+	font-size: var(--aitc-font-size-lg);
+}
+
+.aitc-star {
+	line-height: 1;
+}
+
+.aitc-star--filled {
+	color: var(--aitc-color-star);
+}
+
+.aitc-star--empty {
+	color: var(--aitc-color-border);
+}
+
+.aitc-stars-sm {
+	color: var(--aitc-color-star);
+	font-size: var(--aitc-font-size-sm);
+}
+
+.aitc-stars-sm .aitc-star--empty {
+	color: var(--aitc-color-border);
+}
+
+/* Tags */
+.aitc-tag {
+	display: inline-block;
+	padding: 0.375rem 0.75rem;
+	font-size: var(--aitc-font-size-xs);
+	font-weight: 500;
+	color: var(--aitc-color-text-secondary);
+	background: var(--aitc-color-bg-muted);
+	border-radius: var(--aitc-radius-sm);
+	text-decoration: none;
+	transition: background-color 0.15s, color 0.15s;
+}
+
+.aitc-tag:hover {
+	background: var(--aitc-color-primary-light);
+	color: var(--aitc-color-primary);
+}
+
+/* Empty state */
+.aitc-empty-state {
+	text-align: center;
+	padding: var(--aitc-space-2xl) var(--aitc-space-md);
+	color: var(--aitc-color-text-secondary);
+	font-size: var(--aitc-font-size-lg);
+}
+
+/* Icons */
+.aitc-icon {
+	flex-shrink: 0;
+	vertical-align: middle;
+}
+
+/* Helper text */
+.aitc-text--success {
+	color: var(--aitc-color-success);
+	font-weight: 600;
+}
+
+/* Screen reader only */
+.screen-reader-text {
+	clip: rect(1px, 1px, 1px, 1px);
+	position: absolute;
+	height: 1px;
+	width: 1px;
+	overflow: hidden;
+	word-wrap: normal;
+}
+
+/* ==========================================================================
+   Breadcrumbs
+   ========================================================================== */
+.aitc-breadcrumbs {
+	margin-bottom: var(--aitc-space-lg);
+}
+
+.aitc-breadcrumbs ol {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--aitc-space-xs);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	font-size: var(--aitc-font-size-sm);
+	color: var(--aitc-color-text-muted);
+}
+
+.aitc-breadcrumbs li::after {
+	content: "/";
+	margin-left: var(--aitc-space-xs);
+	color: var(--aitc-color-text-muted);
+}
+
+.aitc-breadcrumbs li:last-child::after {
+	content: none;
+}
+
+.aitc-breadcrumbs a {
+	color: var(--aitc-color-text-secondary);
+	text-decoration: none;
+}
+
+.aitc-breadcrumbs a:hover {
+	color: var(--aitc-color-primary);
+	text-decoration: underline;
+}
+
+.aitc-breadcrumbs [aria-current] {
+	color: var(--aitc-color-text);
+	font-weight: 500;
+}
+
+/* ==========================================================================
+   Single Tool - Hero
+   ========================================================================== */
+.aitc-tool-hero {
+	display: flex;
+	gap: var(--aitc-space-lg);
+	align-items: flex-start;
+	margin-bottom: var(--aitc-space-xl);
+}
+
+.aitc-tool-hero__logo {
+	flex-shrink: 0;
+	width: 5rem;
+	height: 5rem;
+	border-radius: var(--aitc-radius-lg);
+	overflow: hidden;
+	border: 1px solid var(--aitc-color-border);
+	background: var(--aitc-color-bg);
+}
+
+.aitc-tool-hero__logo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.aitc-tool-hero__info {
+	flex: 1;
+	min-width: 0;
+}
+
+.aitc-tool-hero__badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--aitc-space-sm);
+	margin-bottom: var(--aitc-space-sm);
+}
+
+.aitc-tool-hero .entry-title {
+	font-size: var(--aitc-font-size-2xl);
+	font-weight: 700;
+	color: var(--aitc-color-text);
+	margin: 0 0 var(--aitc-space-sm);
+	line-height: 1.2;
+}
+
+.aitc-tool-hero__rating {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: var(--aitc-space-sm);
+	margin-bottom: var(--aitc-space-md);
 }
 
-.aitc-rating-summary .rating-value {
-	font-size: 36px;
-	font-weight: bold;
-	color: #f39c12;
+.aitc-tool-hero__rating-text {
+	font-size: var(--aitc-font-size-sm);
+	color: var(--aitc-color-text-secondary);
 }
 
-.aitc-rating-summary .rating-stars {
-	font-size: 24px;
-	color: #f39c12;
+.aitc-tool-hero__actions {
+	margin-bottom: var(--aitc-space-md);
 }
 
-.aitc-rating-summary .rating-count {
-	color: #666;
-	font-size: 14px;
+.aitc-tool-hero__updated {
+	font-size: var(--aitc-font-size-xs);
+	color: var(--aitc-color-text-muted);
+}
+
+.aitc-tool-hero__updated time {
+	font-weight: 500;
+}
+
+/* ==========================================================================
+   Single Tool - At a Glance
+   ========================================================================== */
+.aitc-at-a-glance {
+	background: var(--aitc-color-bg-subtle);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-lg);
+	padding: var(--aitc-space-lg);
+	margin-bottom: var(--aitc-space-2xl);
+}
+
+.aitc-at-a-glance__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+	gap: var(--aitc-space-md) var(--aitc-space-lg);
+	margin: 0;
+	padding: 0;
+}
+
+.aitc-at-a-glance__item {
+	min-width: 0;
+}
+
+.aitc-at-a-glance__item dt {
+	font-size: var(--aitc-font-size-xs);
+	font-weight: 500;
+	color: var(--aitc-color-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.25rem;
+}
+
+.aitc-at-a-glance__item dd {
+	font-size: var(--aitc-font-size-base);
+	font-weight: 600;
+	color: var(--aitc-color-text);
+	margin: 0;
+}
+
+.aitc-at-a-glance__item dd a {
+	color: var(--aitc-color-primary);
+	text-decoration: none;
+}
+
+.aitc-at-a-glance__item dd a:hover {
+	text-decoration: underline;
+}
+
+/* ==========================================================================
+   Single Tool - Content Sections
+   ========================================================================== */
+.aitc-section {
+	margin-bottom: var(--aitc-space-2xl);
+}
+
+.aitc-section h2 {
+	font-size: var(--aitc-font-size-xl);
+	font-weight: 700;
+	color: var(--aitc-color-text);
+	margin: 0 0 var(--aitc-space-md);
+	padding-bottom: var(--aitc-space-sm);
+	border-bottom: 2px solid var(--aitc-color-border);
+}
+
+/* Feature list */
+.aitc-feature-list,
+.aitc-usecase-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.aitc-feature-list li,
+.aitc-usecase-list li {
+	position: relative;
+	padding: var(--aitc-space-sm) 0 var(--aitc-space-sm) 1.75rem;
+	color: var(--aitc-color-text);
+	line-height: 1.5;
+}
+
+.aitc-feature-list li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.85rem;
+	width: 0.5rem;
+	height: 0.5rem;
+	background: var(--aitc-color-primary);
+	border-radius: 50%;
+}
+
+.aitc-usecase-list li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.7rem;
+	width: 0.75rem;
+	height: 0.75rem;
+	border: 2px solid var(--aitc-color-primary);
+	border-radius: var(--aitc-radius-sm);
+}
+
+/* ==========================================================================
+   Single Tool - Pricing Section
+   ========================================================================== */
+.aitc-pricing-section {
+	padding: var(--aitc-space-lg);
+	background: var(--aitc-color-bg);
+	border: 2px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-lg);
+}
+
+.aitc-free-plan {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-sm);
+	color: var(--aitc-color-success);
+	font-weight: 600;
+	font-size: var(--aitc-font-size-base);
+}
+
+.aitc-pricing-tiers {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--aitc-space-md);
+	margin: var(--aitc-space-md) 0;
+}
+
+.pricing-tier {
+	padding: var(--aitc-space-lg);
+	background: var(--aitc-color-bg-subtle);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-md);
+}
+
+.pricing-tier h3 {
+	margin-top: 0;
+	color: var(--aitc-color-primary);
+	font-size: var(--aitc-font-size-lg);
+}
+
+.tier-price {
+	font-size: var(--aitc-font-size-xl);
+	font-weight: 700;
+	margin: var(--aitc-space-sm) 0;
+}
+
+.tier-notes {
+	font-size: var(--aitc-font-size-sm);
+	color: var(--aitc-color-text-secondary);
+}
+
+/* ==========================================================================
+   Single Tool - Pros & Cons
+   ========================================================================== */
+.aitc-pros-cons__grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--aitc-space-md);
+}
+
+.aitc-pros-cons__column {
+	padding: var(--aitc-space-lg);
+	border-radius: var(--aitc-radius-lg);
+}
+
+.aitc-pros-cons__column--pros {
+	background: var(--aitc-color-success-light);
+	border: 1px solid var(--aitc-color-success-border);
+}
+
+.aitc-pros-cons__column--cons {
+	background: var(--aitc-color-danger-light);
+	border: 1px solid var(--aitc-color-danger-border);
+}
+
+.aitc-pros-cons__column h3 {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-sm);
+	margin: 0 0 var(--aitc-space-md);
+	font-size: var(--aitc-font-size-base);
+	font-weight: 700;
+}
+
+.aitc-pros-cons__column--pros h3 {
+	color: var(--aitc-color-success);
+}
+
+.aitc-pros-cons__column--cons h3 {
+	color: var(--aitc-color-danger);
+}
+
+.aitc-pros-cons__column ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.aitc-pros-cons__column li {
+	position: relative;
+	padding: var(--aitc-space-xs) 0 var(--aitc-space-xs) 1.5rem;
+	line-height: 1.5;
+	color: var(--aitc-color-text);
+}
+
+.aitc-pros-cons__column--pros li::before {
+	content: "+";
+	position: absolute;
+	left: 0;
+	font-weight: 700;
+	color: var(--aitc-color-success);
+}
+
+.aitc-pros-cons__column--cons li::before {
+	content: "\2013";
+	position: absolute;
+	left: 0;
+	font-weight: 700;
+	color: var(--aitc-color-danger);
+}
+
+/* ==========================================================================
+   Single Tool - Mini Cards (Alternatives / Related)
+   ========================================================================== */
+.aitc-mini-cards {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--aitc-space-sm);
+}
+
+.aitc-mini-card {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-md);
+	padding: var(--aitc-space-md);
+	background: var(--aitc-color-bg);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-md);
+	text-decoration: none;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.aitc-mini-card:hover {
+	border-color: var(--aitc-color-primary);
+	box-shadow: var(--aitc-shadow-sm);
+}
+
+.aitc-mini-card:focus-visible {
+	outline: 2px solid var(--aitc-color-primary);
+	outline-offset: 2px;
+}
+
+.aitc-mini-card__thumb {
+	flex-shrink: 0;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--aitc-radius-sm);
+	overflow: hidden;
+}
+
+.aitc-mini-card__thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.aitc-mini-card__body {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.aitc-mini-card__title {
+	font-size: var(--aitc-font-size-sm);
+	font-weight: 600;
+	color: var(--aitc-color-text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.aitc-mini-card__meta {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-sm);
+	font-size: var(--aitc-font-size-xs);
+}
+
+/* ==========================================================================
+   Single Tool - Reviews
+   ========================================================================== */
+.aitc-rating-summary {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-lg);
+	padding: var(--aitc-space-lg);
+	background: var(--aitc-color-bg-subtle);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-lg);
+	margin-bottom: var(--aitc-space-xl);
+}
+
+.aitc-rating-summary__score {
+	display: flex;
+	align-items: baseline;
+	gap: 0.125rem;
+}
+
+.aitc-rating-summary__value {
+	font-size: var(--aitc-font-size-3xl);
+	font-weight: 700;
+	color: var(--aitc-color-star);
+	line-height: 1;
+}
+
+.aitc-rating-summary__max {
+	font-size: var(--aitc-font-size-lg);
+	color: var(--aitc-color-text-muted);
+	font-weight: 500;
+}
+
+.aitc-rating-summary__detail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.aitc-rating-summary__count {
+	color: var(--aitc-color-text-secondary);
+	font-size: var(--aitc-font-size-sm);
 }
 
 /* Reviews list */
 .aitc-reviews-list {
-	margin: 30px 0;
+	margin-bottom: var(--aitc-space-xl);
 }
 
 .aitc-review {
-	margin-bottom: 30px;
-	padding-bottom: 20px;
-	border-bottom: 1px solid #e0e0e0;
+	padding: var(--aitc-space-lg) 0;
+	border-bottom: 1px solid var(--aitc-color-border);
+}
+
+.aitc-review:first-child {
+	padding-top: 0;
 }
 
 .aitc-review:last-child {
 	border-bottom: none;
 }
 
-.aitc-review .review-header {
+.aitc-review__header {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: var(--aitc-space-sm);
+	margin-bottom: var(--aitc-space-sm);
+}
+
+.aitc-review__author-info {
 	display: flex;
 	align-items: center;
-	gap: 15px;
-	margin-bottom: 10px;
+	gap: var(--aitc-space-sm);
 }
 
-.aitc-review .review-author {
-	font-weight: bold;
-	color: #333;
-}
-
-.aitc-review .review-rating {
-	color: #f39c12;
-	font-size: 16px;
-}
-
-.aitc-review .review-date {
-	color: #999;
-	font-size: 13px;
-}
-
-.aitc-review .review-title {
-	margin: 10px 0 5px;
-	font-size: 18px;
+.aitc-review__author {
 	font-weight: 600;
+	color: var(--aitc-color-text);
+	font-size: var(--aitc-font-size-sm);
 }
 
-.aitc-review .review-text {
-	color: #555;
+.aitc-review__meta {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-sm);
+}
+
+.aitc-review__date {
+	color: var(--aitc-color-text-muted);
+	font-size: var(--aitc-font-size-xs);
+}
+
+.aitc-review__title {
+	margin: var(--aitc-space-sm) 0 var(--aitc-space-xs);
+	font-size: var(--aitc-font-size-base);
+	font-weight: 600;
+	color: var(--aitc-color-text);
+}
+
+.aitc-review__text {
+	color: var(--aitc-color-text-secondary);
 	line-height: 1.6;
+	font-size: var(--aitc-font-size-sm);
 }
 
-/* Review form */
+.aitc-review__text p:last-child {
+	margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Single Tool - Review Form (collapsible)
+   ========================================================================== */
 .aitc-submit-review {
-	margin: 40px 0;
-	padding: 30px;
-	background: #f5f5f5;
-	border-radius: 4px;
+	margin-top: var(--aitc-space-lg);
+}
+
+.aitc-submit-review > summary {
+	cursor: pointer;
+	list-style: none;
+}
+
+.aitc-submit-review > summary::-webkit-details-marker {
+	display: none;
+}
+
+.aitc-submit-review__form-wrapper {
+	padding: var(--aitc-space-lg);
+	margin-top: var(--aitc-space-md);
+	background: var(--aitc-color-bg-subtle);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-lg);
 }
 
 .aitc-review-form .form-field {
-	margin-bottom: 20px;
+	margin-bottom: var(--aitc-space-md);
 }
 
 .aitc-review-form label {
 	display: block;
-	margin-bottom: 5px;
+	margin-bottom: var(--aitc-space-xs);
 	font-weight: 600;
+	font-size: var(--aitc-font-size-sm);
+	color: var(--aitc-color-text);
 }
 
 .aitc-review-form input[type="text"],
 .aitc-review-form textarea {
 	width: 100%;
-	max-width: 600px;
-	padding: 8px 12px;
-	border: 1px solid #ddd;
-	border-radius: 4px;
+	padding: 0.625rem 0.875rem;
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-md);
+	font-size: var(--aitc-font-size-base);
+	color: var(--aitc-color-text);
+	background: var(--aitc-color-bg);
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.aitc-review-form input[type="text"]:focus,
+.aitc-review-form textarea:focus {
+	outline: none;
+	border-color: var(--aitc-color-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.aitc-review-form input[type="text"]::placeholder,
+.aitc-review-form textarea::placeholder {
+	color: var(--aitc-color-text-muted);
 }
 
 .aitc-review-form textarea {
 	resize: vertical;
+	min-height: 6rem;
 }
 
 /* Star rating input */
@@ -116,66 +819,157 @@
 	display: flex;
 	flex-direction: row-reverse;
 	justify-content: flex-end;
-	gap: 5px;
-	font-size: 32px;
+	gap: 0.25rem;
 }
 
 .star-rating-input input[type="radio"] {
-	display: none;
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
 }
 
 .star-rating-input label {
 	cursor: pointer;
-	color: #ddd;
-	transition: color 0.2s;
+	color: var(--aitc-color-border);
+	font-size: 2rem;
+	line-height: 1;
+	padding: 0.25rem;
 	margin: 0;
+	transition: color 0.15s, transform 0.1s;
+}
+
+.star-rating-input label:hover {
+	transform: scale(1.1);
 }
 
 .star-rating-input input[type="radio"]:checked ~ label,
 .star-rating-input label:hover,
 .star-rating-input label:hover ~ label {
-	color: #f39c12;
+	color: var(--aitc-color-star);
+}
+
+.star-rating-input input[type="radio"]:focus-visible + label {
+	outline: 2px solid var(--aitc-color-primary);
+	outline-offset: 2px;
+	border-radius: var(--aitc-radius-sm);
 }
 
 /* Form messages */
 .aitc-form-message {
-	margin-top: 15px;
-	padding: 10px 15px;
-	border-radius: 4px;
+	margin-top: var(--aitc-space-md);
+	padding: var(--aitc-space-sm) var(--aitc-space-md);
+	border-radius: var(--aitc-radius-md);
+	font-size: var(--aitc-font-size-sm);
+	font-weight: 500;
 	display: none;
 }
 
 .aitc-form-message.success {
 	display: block;
-	background: #d4edda;
-	color: #155724;
-	border: 1px solid #c3e6cb;
+	background: var(--aitc-color-success-light);
+	color: var(--aitc-color-success);
+	border: 1px solid var(--aitc-color-success-border);
 }
 
 .aitc-form-message.error {
 	display: block;
-	background: #f8d7da;
-	color: #721c24;
-	border: 1px solid #f5c6cb;
+	background: var(--aitc-color-danger-light);
+	color: var(--aitc-color-danger);
+	border: 1px solid var(--aitc-color-danger-border);
 }
 
-/* Editorial review */
+/* ==========================================================================
+   Single Tool - FAQ Accordion
+   ========================================================================== */
+.aitc-faq-item {
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-md);
+	margin-bottom: var(--aitc-space-sm);
+	overflow: hidden;
+}
+
+.aitc-faq-item summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--aitc-space-md) var(--aitc-space-lg);
+	font-weight: 600;
+	font-size: var(--aitc-font-size-base);
+	color: var(--aitc-color-text);
+	cursor: pointer;
+	background: var(--aitc-color-bg);
+	transition: background-color 0.15s;
+	list-style: none;
+}
+
+.aitc-faq-item summary::-webkit-details-marker {
+	display: none;
+}
+
+.aitc-faq-item summary::after {
+	content: "+";
+	flex-shrink: 0;
+	font-size: var(--aitc-font-size-xl);
+	font-weight: 300;
+	color: var(--aitc-color-text-muted);
+	transition: transform 0.2s;
+	margin-left: var(--aitc-space-md);
+}
+
+.aitc-faq-item[open] summary::after {
+	content: "\2212";
+}
+
+.aitc-faq-item summary:hover {
+	background: var(--aitc-color-bg-subtle);
+}
+
+.aitc-faq-item summary:focus-visible {
+	outline: 2px solid var(--aitc-color-primary);
+	outline-offset: -2px;
+}
+
+.aitc-faq-item__answer {
+	padding: 0 var(--aitc-space-lg) var(--aitc-space-lg);
+	color: var(--aitc-color-text-secondary);
+	line-height: 1.6;
+}
+
+.aitc-faq-item__answer p:last-child {
+	margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Single Tool - Footer Tags
+   ========================================================================== */
+.aitc-tool-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--aitc-space-sm);
+	padding-top: var(--aitc-space-xl);
+	border-top: 1px solid var(--aitc-color-border);
+}
+
+/* ==========================================================================
+   Single Tool - Editorial Review
+   ========================================================================== */
 .aitc-editorial-review {
-	margin: 40px 0;
-	padding: 30px;
-	background: #f0f8ff;
-	border-radius: 4px;
-	border-left: 4px solid #0073aa;
+	margin: var(--aitc-space-2xl) 0;
+	padding: var(--aitc-space-lg);
+	background: var(--aitc-color-primary-light);
+	border-radius: var(--aitc-radius-lg);
+	border-left: 4px solid var(--aitc-color-primary);
 }
 
 .aitc-editor-rating {
-	margin-bottom: 20px;
-	font-size: 18px;
+	margin-bottom: var(--aitc-space-md);
+	font-size: var(--aitc-font-size-lg);
 }
 
 .aitc-editor-rating .rating-stars {
-	color: #f39c12;
-	margin-left: 10px;
+	color: var(--aitc-color-star);
+	margin-left: var(--aitc-space-sm);
 }
 
 .editor-pros ul,
@@ -188,164 +982,259 @@
 .editor-pros li,
 .editor-cons li,
 .editor-features li {
-	padding: 5px 0;
+	padding: var(--aitc-space-xs) 0;
 }
 
-/* Pricing section */
-.aitc-pricing-section {
-	margin: 40px 0;
-	padding: 30px;
-	background: #fff;
-	border: 2px solid #e0e0e0;
-	border-radius: 4px;
+/* ==========================================================================
+   Archive & Taxonomy
+   ========================================================================== */
+.aitc-archive .page-header {
+	margin-bottom: var(--aitc-space-lg);
 }
 
-.aitc-price-display {
-	font-size: 24px;
-	color: #0073aa;
-	margin: 15px 0;
+.aitc-archive .page-title {
+	font-size: var(--aitc-font-size-2xl);
+	font-weight: 700;
+	color: var(--aitc-color-text);
+	margin: 0 0 var(--aitc-space-sm);
 }
 
-.aitc-pricing-tiers {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-	gap: 20px;
-	margin: 20px 0;
+.aitc-archive__intro {
+	color: var(--aitc-color-text-secondary);
+	font-size: var(--aitc-font-size-base);
+	line-height: 1.6;
+	max-width: 48rem;
 }
 
-.pricing-tier {
-	padding: 20px;
-	background: #f9f9f9;
-	border: 1px solid #ddd;
-	border-radius: 4px;
+.aitc-archive__meta {
+	margin-bottom: var(--aitc-space-md);
 }
 
-.pricing-tier h3 {
-	margin-top: 0;
-	color: #0073aa;
+.aitc-archive__count {
+	font-size: var(--aitc-font-size-sm);
+	color: var(--aitc-color-text-secondary);
 }
 
-.tier-price {
-	font-size: 20px;
-	font-weight: bold;
-	margin: 10px 0;
-}
-
-.tier-notes {
-	font-size: 14px;
-	color: #666;
-}
-
-/* Archive/Taxonomy styles */
+/* Tools Grid */
 .aitc-tools-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	gap: 30px;
-	margin: 30px 0;
+	grid-template-columns: 1fr;
+	gap: var(--aitc-space-lg);
+	margin-bottom: var(--aitc-space-2xl);
 }
 
+/* ==========================================================================
+   Tool Card (Archive)
+   ========================================================================== */
 .aitc-tool-card {
-	background: #fff;
-	border: 1px solid #e0e0e0;
-	border-radius: 4px;
+	display: flex;
+	flex-direction: column;
+	background: var(--aitc-color-bg);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-lg);
 	overflow: hidden;
-	transition: box-shadow 0.3s;
+	transition: border-color 0.15s, box-shadow 0.2s;
 }
 
 .aitc-tool-card:hover {
-	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+	border-color: var(--aitc-color-primary);
+	box-shadow: var(--aitc-shadow-md);
 }
 
-.aitc-tool-card .tool-thumbnail img {
+.aitc-tool-card__header {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-md);
+	padding: var(--aitc-space-md) var(--aitc-space-md) 0;
+}
+
+.aitc-tool-card__thumb {
+	flex-shrink: 0;
+	width: 3rem;
+	height: 3rem;
+	border-radius: var(--aitc-radius-md);
+	overflow: hidden;
+	border: 1px solid var(--aitc-color-border);
+}
+
+.aitc-tool-card__thumb img {
 	width: 100%;
-	height: auto;
+	height: 100%;
+	object-fit: cover;
 	display: block;
 }
 
-.aitc-tool-card .tool-content {
-	padding: 20px;
-}
-
-.aitc-tool-card .tool-title {
-	margin: 0 0 10px;
-	font-size: 20px;
-}
-
-.aitc-tool-card .tool-title a {
-	text-decoration: none;
-	color: #333;
-}
-
-.aitc-tool-card .tool-title a:hover {
-	color: #0073aa;
-}
-
-.aitc-tool-card .tool-excerpt {
-	color: #666;
-	font-size: 14px;
-	margin-bottom: 15px;
-}
-
-.aitc-tool-card .tool-meta {
-	margin: 15px 0;
-	padding: 15px 0;
-	border-top: 1px solid #e0e0e0;
-	border-bottom: 1px solid #e0e0e0;
-	font-size: 13px;
-}
-
-.aitc-tool-card .tool-rating,
-.aitc-tool-card .tool-user-rating {
-	margin: 5px 0;
-}
-
-.aitc-tool-card .rating-stars {
-	color: #f39c12;
-}
-
-.aitc-tool-card .pricing-badge {
-	display: inline-block;
-	padding: 3px 8px;
-	background: #0073aa;
-	color: #fff;
-	border-radius: 3px;
-	font-size: 12px;
-	text-transform: capitalize;
-}
-
-.aitc-tool-card .tool-actions {
+.aitc-tool-card__badges {
 	display: flex;
-	gap: 10px;
-	margin-top: 15px;
+	flex-wrap: wrap;
+	gap: var(--aitc-space-xs);
 }
 
-.aitc-tool-card .button {
+.aitc-tool-card__body {
 	flex: 1;
-	text-align: center;
+	padding: var(--aitc-space-md);
+}
+
+.aitc-tool-card__category {
+	display: block;
+	font-size: var(--aitc-font-size-xs);
+	font-weight: 500;
+	color: var(--aitc-color-primary);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.25rem;
+}
+
+.aitc-tool-card__title {
+	margin: 0 0 var(--aitc-space-sm);
+	font-size: var(--aitc-font-size-lg);
+	line-height: 1.3;
+}
+
+.aitc-tool-card__title a {
 	text-decoration: none;
-	padding: 10px 15px;
-	border-radius: 4px;
-	font-size: 14px;
-	transition: background 0.3s;
+	color: var(--aitc-color-text);
 }
 
-.aitc-tool-card .button-primary {
-	background: #0073aa;
+.aitc-tool-card__title a:hover {
+	color: var(--aitc-color-primary);
+}
+
+.aitc-tool-card__excerpt {
+	color: var(--aitc-color-text-secondary);
+	font-size: var(--aitc-font-size-sm);
+	line-height: 1.5;
+	margin: 0 0 var(--aitc-space-md);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.aitc-tool-card__ratings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--aitc-space-sm) var(--aitc-space-lg);
+	padding-top: var(--aitc-space-sm);
+	border-top: 1px solid var(--aitc-color-border);
+}
+
+.aitc-tool-card__rating {
+	display: flex;
+	align-items: center;
+	gap: var(--aitc-space-xs);
+	font-size: var(--aitc-font-size-sm);
+}
+
+.aitc-tool-card__rating-label {
+	font-size: var(--aitc-font-size-xs);
+	color: var(--aitc-color-text-muted);
+	font-weight: 500;
+}
+
+.aitc-tool-card__review-count {
+	font-size: var(--aitc-font-size-xs);
+	color: var(--aitc-color-text-muted);
+}
+
+.aitc-tool-card__footer {
+	padding: 0 var(--aitc-space-md) var(--aitc-space-md);
+	margin-top: auto;
+}
+
+/* ==========================================================================
+   Pagination (WordPress default override)
+   ========================================================================== */
+.aitc-archive .nav-links {
+	display: flex;
+	justify-content: center;
+	gap: var(--aitc-space-xs);
+	flex-wrap: wrap;
+}
+
+.aitc-archive .page-numbers {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5rem;
+	height: 2.5rem;
+	padding: 0 0.75rem;
+	font-size: var(--aitc-font-size-sm);
+	font-weight: 500;
+	color: var(--aitc-color-text-secondary);
+	background: var(--aitc-color-bg);
+	border: 1px solid var(--aitc-color-border);
+	border-radius: var(--aitc-radius-md);
+	text-decoration: none;
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.aitc-archive .page-numbers:hover {
+	background: var(--aitc-color-bg-subtle);
+	border-color: var(--aitc-color-primary);
+	color: var(--aitc-color-primary);
+}
+
+.aitc-archive .page-numbers.current {
+	background: var(--aitc-color-primary);
+	border-color: var(--aitc-color-primary);
 	color: #fff;
 }
 
-.aitc-tool-card .button-primary:hover {
-	background: #005a87;
-	color: #fff;
+/* ==========================================================================
+   Responsive - Tablet (640px+)
+   ========================================================================== */
+@media (min-width: 40em) {
+	.aitc-tools-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.aitc-pros-cons__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.aitc-mini-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.aitc-pricing-tiers {
+		grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	}
+
+	.aitc-tool-hero .entry-title {
+		font-size: var(--aitc-font-size-3xl);
+	}
+
+	.aitc-tool-hero__logo {
+		width: 6rem;
+		height: 6rem;
+	}
 }
 
-.aitc-tool-card .button-secondary {
-	background: #f0f0f0;
-	color: #333;
-	border: 1px solid #ddd;
+/* ==========================================================================
+   Responsive - Desktop (1024px+)
+   ========================================================================== */
+@media (min-width: 64em) {
+	.aitc-tools-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.aitc-mini-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.aitc-archive .page-title {
+		font-size: var(--aitc-font-size-3xl);
+	}
 }
 
-.aitc-tool-card .button-secondary:hover {
-	background: #e0e0e0;
-	color: #333;
+/* ==========================================================================
+   Print
+   ========================================================================== */
+@media print {
+	.aitc-submit-review,
+	.aitc-tool-hero__actions,
+	.aitc-tool-card__footer {
+		display: none;
+	}
 }
