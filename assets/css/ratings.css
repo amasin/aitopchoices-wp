@@ -74,14 +74,18 @@
 	outline-offset: 2px;
 }
 
+a.aitc-btn.aitc-btn--primary,
+button.aitc-btn.aitc-btn--primary,
 .aitc-btn--primary {
-	background: var(--aitc-color-primary);
-	color: #fff;
+	background: var(--aitc-color-primary) !important;
+	color: #fff !important;
 }
 
+a.aitc-btn.aitc-btn--primary:hover,
+button.aitc-btn.aitc-btn--primary:hover,
 .aitc-btn--primary:hover {
-	background: var(--aitc-color-primary-hover);
-	color: #fff;
+	background: var(--aitc-color-primary-hover) !important;
+	color: #fff !important;
 }
 
 .aitc-btn--secondary {
@@ -1015,28 +1019,31 @@
 	color: var(--aitc-color-text-secondary);
 }
 
-/* Tools Grid */
+/* Tools Grid - uses auto-fill so it adapts to any container width */
 .aitc-tools-grid {
-	display: grid;
-	grid-template-columns: 1fr;
+	display: grid !important;
+	grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr)) !important;
 	gap: var(--aitc-space-lg);
 	margin-bottom: var(--aitc-space-2xl);
 }
 
 /* ==========================================================================
    Tool Card (Archive)
+   High specificity to override theme styles on article elements
    ========================================================================== */
-.aitc-tool-card {
-	display: flex;
-	flex-direction: column;
+article.aitc-tool-card {
+	display: flex !important;
+	flex-direction: column !important;
 	background: var(--aitc-color-bg);
 	border: 1px solid var(--aitc-color-border);
 	border-radius: var(--aitc-radius-lg);
 	overflow: hidden;
 	transition: border-color 0.15s, box-shadow 0.2s;
+	padding: 0 !important;
+	margin: 0 !important;
 }
 
-.aitc-tool-card:hover {
+article.aitc-tool-card:hover {
 	border-color: var(--aitc-color-primary);
 	box-shadow: var(--aitc-shadow-md);
 }
@@ -1055,13 +1062,15 @@
 	border-radius: var(--aitc-radius-md);
 	overflow: hidden;
 	border: 1px solid var(--aitc-color-border);
+	display: block;
 }
 
 .aitc-tool-card__thumb img {
-	width: 100%;
-	height: 100%;
+	width: 100% !important;
+	height: 100% !important;
 	object-fit: cover;
 	display: block;
+	max-width: 3rem;
 }
 
 .aitc-tool-card__badges {
@@ -1085,10 +1094,12 @@
 	margin-bottom: 0.25rem;
 }
 
-.aitc-tool-card__title {
-	margin: 0 0 var(--aitc-space-sm);
+.aitc-tool-card .aitc-tool-card__title {
+	margin: 0 0 var(--aitc-space-sm) !important;
+	padding: 0 !important;
 	font-size: var(--aitc-font-size-lg);
 	line-height: 1.3;
+	border: none !important;
 }
 
 .aitc-tool-card__title a {
@@ -1142,6 +1153,34 @@
 	margin-top: auto;
 }
 
+/* Button inside card - high specificity to override theme */
+.aitc-tool-card__footer a.aitc-btn {
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	padding: 0.75rem 1.5rem !important;
+	font-size: var(--aitc-font-size-sm) !important;
+	font-weight: 600 !important;
+	line-height: 1.25;
+	text-decoration: none !important;
+	text-align: center;
+	border: 2px solid var(--aitc-color-border) !important;
+	border-radius: var(--aitc-radius-md) !important;
+	background: var(--aitc-color-bg-muted) !important;
+	color: var(--aitc-color-text) !important;
+	cursor: pointer;
+	transition: background-color 0.15s, border-color 0.15s;
+	min-height: 2.75rem;
+	box-sizing: border-box;
+}
+
+.aitc-tool-card__footer a.aitc-btn:hover {
+	background: var(--aitc-color-border) !important;
+	color: var(--aitc-color-text) !important;
+	border-color: var(--aitc-color-primary) !important;
+}
+
 /* ==========================================================================
    Pagination (WordPress default override)
    ========================================================================== */
@@ -1185,10 +1224,6 @@
    Responsive - Tablet (640px+)
    ========================================================================== */
 @media (min-width: 40em) {
-	.aitc-tools-grid {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
 	.aitc-pros-cons__grid {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -1215,10 +1250,6 @@
    Responsive - Desktop (1024px+)
    ========================================================================== */
 @media (min-width: 64em) {
-	.aitc-tools-grid {
-		grid-template-columns: repeat(3, 1fr);
-	}
-
 	.aitc-mini-cards {
 		grid-template-columns: repeat(2, 1fr);
 	}

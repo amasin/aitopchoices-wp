@@ -27,10 +27,17 @@ get_header(); ?>
 				the_post();
 				$post_id = get_the_ID();
 				$official_url = get_post_meta( $post_id, '_official_url', true );
-				$pricing_model = get_post_meta( $post_id, '_pricing_model', true );
+				// Read both meta key variants (CSV importer uses _aitc_, admin uses legacy)
+				$pricing_model = get_post_meta( $post_id, '_aitc_pricing_model', true );
+				if ( ! $pricing_model ) {
+					$pricing_model = get_post_meta( $post_id, '_pricing_model', true );
+				}
 				$editor_rating = get_post_meta( $post_id, '_editor_rating_value', true );
 				$rating_summary = AITC_Ratings::get_rating_summary( $post_id );
 				$free_plan = get_post_meta( $post_id, '_aitc_free_plan_available', true );
+				if ( ! $free_plan ) {
+					$free_plan = get_post_meta( $post_id, '_has_free_plan', true );
+				}
 				$primary_cat = null;
 				$cats = get_the_terms( $post_id, 'ai_tool_category' );
 				if ( $cats && ! is_wp_error( $cats ) ) {
@@ -41,24 +48,31 @@ get_header(); ?>
 						}
 					}
 				}
+				$has_badges = $pricing_model || $free_plan;
+				$has_ratings = $editor_rating || ( $rating_summary && $rating_summary->count > 0 );
+				$has_header = has_post_thumbnail() || $has_badges;
 				?>
 
 				<article id="post-<?php the_ID(); ?>" <?php post_class( 'aitc-tool-card' ); ?>>
-					<div class="aitc-tool-card__header">
-						<?php if ( has_post_thumbnail() ) : ?>
-							<a href="<?php the_permalink(); ?>" class="aitc-tool-card__thumb" aria-hidden="true" tabindex="-1">
-								<?php the_post_thumbnail( 'thumbnail' ); ?>
-							</a>
-						<?php endif; ?>
-						<div class="aitc-tool-card__badges">
-							<?php if ( $pricing_model ) : ?>
-								<span class="aitc-badge aitc-badge--pricing"><?php echo esc_html( ucfirst( str_replace( '_', ' ', $pricing_model ) ) ); ?></span>
+					<?php if ( $has_header ) : ?>
+						<div class="aitc-tool-card__header">
+							<?php if ( has_post_thumbnail() ) : ?>
+								<a href="<?php the_permalink(); ?>" class="aitc-tool-card__thumb" aria-hidden="true" tabindex="-1">
+									<?php the_post_thumbnail( 'thumbnail' ); ?>
+								</a>
 							<?php endif; ?>
-							<?php if ( $free_plan ) : ?>
-								<span class="aitc-badge aitc-badge--free"><?php esc_html_e( 'Free Plan', 'aitc-ai-tools' ); ?></span>
+							<?php if ( $has_badges ) : ?>
+								<div class="aitc-tool-card__badges">
+									<?php if ( $pricing_model ) : ?>
+										<span class="aitc-badge aitc-badge--pricing"><?php echo esc_html( ucfirst( str_replace( '_', ' ', $pricing_model ) ) ); ?></span>
+									<?php endif; ?>
+									<?php if ( $free_plan ) : ?>
+										<span class="aitc-badge aitc-badge--free"><?php esc_html_e( 'Free Plan', 'aitc-ai-tools' ); ?></span>
+									<?php endif; ?>
+								</div>
 							<?php endif; ?>
 						</div>
-					</div>
+					<?php endif; ?>
 
 					<div class="aitc-tool-card__body">
 						<?php if ( $primary_cat ) : ?>
@@ -73,26 +87,28 @@ get_header(); ?>
 							<p class="aitc-tool-card__excerpt"><?php echo esc_html( get_the_excerpt() ); ?></p>
 						<?php endif; ?>
 
-						<div class="aitc-tool-card__ratings">
-							<?php if ( $editor_rating ) : ?>
-								<div class="aitc-tool-card__rating">
-									<span class="aitc-tool-card__rating-label"><?php esc_html_e( 'Editor', 'aitc-ai-tools' ); ?></span>
-									<span class="aitc-stars-sm" aria-label="<?php printf( esc_attr__( 'Editor rating: %s out of 5', 'aitc-ai-tools' ), number_format( floatval( $editor_rating ), 1 ) ); ?>">
-										<span class="aitc-star aitc-star--filled">&#9733;</span> <?php echo number_format( floatval( $editor_rating ), 1 ); ?>
-									</span>
-								</div>
-							<?php endif; ?>
+						<?php if ( $has_ratings ) : ?>
+							<div class="aitc-tool-card__ratings">
+								<?php if ( $editor_rating ) : ?>
+									<div class="aitc-tool-card__rating">
+										<span class="aitc-tool-card__rating-label"><?php esc_html_e( 'Editor', 'aitc-ai-tools' ); ?></span>
+										<span class="aitc-stars-sm" aria-label="<?php printf( esc_attr__( 'Editor rating: %s out of 5', 'aitc-ai-tools' ), number_format( floatval( $editor_rating ), 1 ) ); ?>">
+											<span class="aitc-star aitc-star--filled">&#9733;</span> <?php echo number_format( floatval( $editor_rating ), 1 ); ?>
+										</span>
+									</div>
+								<?php endif; ?>
 
-							<?php if ( $rating_summary && $rating_summary->count > 0 ) : ?>
-								<div class="aitc-tool-card__rating">
-									<span class="aitc-tool-card__rating-label"><?php esc_html_e( 'Users', 'aitc-ai-tools' ); ?></span>
-									<span class="aitc-stars-sm" aria-label="<?php printf( esc_attr__( 'User rating: %s out of 5 from %s reviews', 'aitc-ai-tools' ), number_format( floatval( $rating_summary->average ), 1 ), number_format_i18n( $rating_summary->count ) ); ?>">
-										<span class="aitc-star aitc-star--filled">&#9733;</span> <?php echo number_format( floatval( $rating_summary->average ), 1 ); ?>
-									</span>
-									<span class="aitc-tool-card__review-count">(<?php echo number_format_i18n( $rating_summary->count ); ?>)</span>
-								</div>
-							<?php endif; ?>
-						</div>
+								<?php if ( $rating_summary && $rating_summary->count > 0 ) : ?>
+									<div class="aitc-tool-card__rating">
+										<span class="aitc-tool-card__rating-label"><?php esc_html_e( 'Users', 'aitc-ai-tools' ); ?></span>
+										<span class="aitc-stars-sm" aria-label="<?php printf( esc_attr__( 'User rating: %s out of 5 from %s reviews', 'aitc-ai-tools' ), number_format( floatval( $rating_summary->average ), 1 ), number_format_i18n( $rating_summary->count ) ); ?>">
+											<span class="aitc-star aitc-star--filled">&#9733;</span> <?php echo number_format( floatval( $rating_summary->average ), 1 ); ?>
+										</span>
+										<span class="aitc-tool-card__review-count">(<?php echo number_format_i18n( $rating_summary->count ); ?>)</span>
+									</div>
+								<?php endif; ?>
+							</div>
+						<?php endif; ?>
 					</div>
 
 					<div class="aitc-tool-card__footer">
