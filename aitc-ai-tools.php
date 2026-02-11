@@ -3,7 +3,7 @@
  * Plugin Name: AI Top Choices - AI Tools
  * Plugin URI: https://aitopchoices.com
  * Description: Custom post type and taxonomies for AI Tools catalogue with ratings, reviews, schema, and CSV import.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: AI Top Choices
  * Author URI: https://aitopchoices.com
  * Text Domain: aitc-ai-tools
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'AITC_AI_TOOLS_VERSION', '1.0.0' );
+define( 'AITC_AI_TOOLS_VERSION', '1.1.0' );
 define( 'AITC_AI_TOOLS_FILE', __FILE__ );
 define( 'AITC_AI_TOOLS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AITC_AI_TOOLS_URL', plugin_dir_url( __FILE__ ) );

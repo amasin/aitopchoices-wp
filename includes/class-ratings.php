@@ -60,17 +60,28 @@ class AITC_Ratings {
 	 * Enqueue frontend scripts
 	 */
 	public static function enqueue_scripts() {
-		if ( is_singular( 'ai_tool' ) ) {
+		$is_aitc_page = is_singular( 'ai_tool' )
+			|| is_post_type_archive( 'ai_tool' )
+			|| is_tax( 'ai_tool_category' )
+			|| is_tax( 'ai_use_case' )
+			|| is_tax( 'ai_platform' )
+			|| is_tax( 'ai_pricing_model' );
+
+		if ( $is_aitc_page ) {
 			wp_enqueue_style( 'aitc-ratings', AITC_AI_TOOLS_URL . 'assets/css/ratings.css', array(), AITC_AI_TOOLS_VERSION );
-			wp_enqueue_script( 'aitc-ratings', AITC_AI_TOOLS_URL . 'assets/js/ratings.js', array( 'jquery' ), AITC_AI_TOOLS_VERSION, true );
-			wp_localize_script(
-				'aitc-ratings',
-				'aitcRatings',
-				array(
-					'ajaxurl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'aitc_rating_nonce' ),
-				)
-			);
+
+			// Only load JS on single tool pages (review form)
+			if ( is_singular( 'ai_tool' ) ) {
+				wp_enqueue_script( 'aitc-ratings', AITC_AI_TOOLS_URL . 'assets/js/ratings.js', array( 'jquery' ), AITC_AI_TOOLS_VERSION, true );
+				wp_localize_script(
+					'aitc-ratings',
+					'aitcRatings',
+					array(
+						'ajaxurl' => admin_url( 'admin-ajax.php' ),
+						'nonce'   => wp_create_nonce( 'aitc_rating_nonce' ),
+					)
+				);
+			}
 		}
 	}
 
