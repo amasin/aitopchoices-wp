@@ -50,7 +50,12 @@ class AITC_CSV_Importer {
 
 			<?php if ( isset( $_GET['imported'] ) ) : ?>
 				<div class="notice notice-success is-dismissible">
-					<p><?php printf( __( 'Successfully imported %d tools!', 'aitc-ai-tools' ), absint( $_GET['imported'] ) ); ?></p>
+					<p>
+						<?php printf( __( 'Successfully imported %d tools.', 'aitc-ai-tools' ), absint( $_GET['imported'] ) ); ?>
+						<?php if ( isset( $_GET['skipped'] ) && absint( $_GET['skipped'] ) > 0 ) : ?>
+							<?php printf( __( ' %d rows skipped (see warnings below).', 'aitc-ai-tools' ), absint( $_GET['skipped'] ) ); ?>
+						<?php endif; ?>
+					</p>
 				</div>
 			<?php endif; ?>
 
@@ -81,12 +86,12 @@ class AITC_CSV_Importer {
 					<li><strong>tool_slug</strong> (required): Unique slug for the tool</li>
 					<li><strong>tool_name</strong> (required): Tool name (post title)</li>
 					<li><strong>overview</strong>: Short overview (HTML allowed)</li>
-					<li><strong>key_features, best_use_cases, pros, cons</strong>: Pipe-separated or newline-separated values</li>
-					<li><strong>alternatives</strong>: Comma-separated tool slugs (e.g., "make,n8n,ifttt")</li>
-					<li><strong>faqs</strong>: JSON array of objects [{"q":"...","a":"..."}]</li>
+					<li><strong>key_features, best_use_cases, pros, cons</strong>: Pipe-separated, comma-separated, or newline-separated values</li>
+					<li><strong>alternatives</strong>: Pipe-separated or comma-separated tool names/slugs (e.g., "SEMrush | Moz Pro" or "semrush,moz-pro")</li>
+					<li><strong>faqs</strong>: JSON array [{"q":"...","a":"..."}] <em>or</em> pipe-separated "Question? Answer | Question? Answer"</li>
 					<li><strong>free_plan_available</strong>: 1/0, true/false, yes/no</li>
 					<li><strong>pricing_url</strong>: Full pricing page URL</li>
-					<li><strong>category_slug, use_case, platform, ai_pricing_model, ai_billing_unit</strong>: Comma-separated term slugs</li>
+					<li><strong>category_slug, use_case, platform, ai_pricing_model, ai_billing_unit</strong>: Comma-separated term slugs (auto-creates missing terms)</li>
 				</ul>
 			</div>
 
@@ -139,14 +144,29 @@ class AITC_CSV_Importer {
 		}
 
 		if ( ! isset( $_FILES['csv_file'] ) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK ) {
-			self::redirect_with_error( __( 'Please select a valid CSV file.', 'aitc-ai-tools' ) );
+			$upload_errors = array(
+				UPLOAD_ERR_INI_SIZE   => 'File exceeds server upload_max_filesize limit.',
+				UPLOAD_ERR_FORM_SIZE  => 'File exceeds form MAX_FILE_SIZE.',
+				UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded.',
+				UPLOAD_ERR_NO_FILE    => 'No file was uploaded.',
+				UPLOAD_ERR_NO_TMP_DIR => 'Server missing temporary folder.',
+				UPLOAD_ERR_CANT_WRITE => 'Server failed to write file to disk.',
+			);
+			$error_code = isset( $_FILES['csv_file']['error'] ) ? $_FILES['csv_file']['error'] : UPLOAD_ERR_NO_FILE;
+			$error_msg  = isset( $upload_errors[ $error_code ] ) ? $upload_errors[ $error_code ] : 'Unknown upload error.';
+			self::redirect_with_error( $error_msg );
 		}
 
-		$update_existing = isset( $_POST['update_existing'] );
+		$update_existing       = isset( $_POST['update_existing'] );
 		$overwrite_empty_fields = get_option( 'aitc_ai_tools_overwrite_empty_fields', '0' ) === '1';
-		$file = $_FILES['csv_file']['tmp_name'];
+		$file     = $_FILES['csv_file']['tmp_name'];
 		$imported = 0;
-		$errors = array();
+		$skipped  = 0;
+		$errors   = array();
+
+		// Enable auto-detection of line endings (Mac/Windows/Unix)
+		$prev_detect = ini_get( 'auto_detect_line_endings' );
+		ini_set( 'auto_detect_line_endings', true );
 
 		// Open CSV file
 		if ( ( $handle = fopen( $file, 'r' ) ) !== false ) {
@@ -154,29 +174,67 @@ class AITC_CSV_Importer {
 			$headers = fgetcsv( $handle, 0, ',' );
 			if ( ! $headers ) {
 				fclose( $handle );
-				self::redirect_with_error( __( 'Invalid CSV file format.', 'aitc-ai-tools' ) );
+				self::redirect_with_error( __( 'Invalid CSV file format — could not read headers.', 'aitc-ai-tools' ) );
 			}
 
-			// Normalize headers
-			$headers = array_map( 'trim', $headers );
+			// Strip UTF-8 BOM from first header if present
+			$headers[0] = preg_replace( '/^\xEF\xBB\xBF/', '', $headers[0] );
+
+			// Normalize headers (trim whitespace and lowercase)
+			$headers     = array_map( 'trim', $headers );
+			$header_count = count( $headers );
+
+			// Validate required columns exist
+			if ( ! in_array( 'tool_slug', $headers, true ) || ! in_array( 'tool_name', $headers, true ) ) {
+				fclose( $handle );
+				self::redirect_with_error( __( 'CSV must contain "tool_slug" and "tool_name" columns.', 'aitc-ai-tools' ) );
+			}
 
 			// Process rows
 			$row_number = 1;
 			while ( ( $row = fgetcsv( $handle, 0, ',' ) ) !== false ) {
 				$row_number++;
-				if ( count( $row ) !== count( $headers ) ) {
-					$errors[] = sprintf( __( 'Row %d: column count mismatch.', 'aitc-ai-tools' ), $row_number );
-					continue; // Skip malformed rows
+
+				// Skip completely empty rows
+				if ( count( $row ) === 1 && ( $row[0] === null || trim( $row[0] ) === '' ) ) {
+					continue;
+				}
+
+				$row_count = count( $row );
+
+				// Lenient column handling: pad short rows, trim extra columns
+				if ( $row_count < $header_count ) {
+					$row = array_pad( $row, $header_count, '' );
+				} elseif ( $row_count > $header_count ) {
+					// Only trim if extra columns are all empty (trailing commas)
+					$extra = array_slice( $row, $header_count );
+					$extra_non_empty = array_filter( $extra, function( $v ) {
+						return trim( $v ) !== '';
+					} );
+					if ( ! empty( $extra_non_empty ) ) {
+						$errors[] = sprintf(
+							__( 'Row %d: has %d columns but header has %d. Extra non-empty data may be lost.', 'aitc-ai-tools' ),
+							$row_number, $row_count, $header_count
+						);
+					}
+					$row = array_slice( $row, 0, $header_count );
 				}
 
 				$data = array_combine( $headers, $row );
 				if ( self::import_tool( $data, $update_existing, $overwrite_empty_fields, $errors, $row_number ) ) {
 					$imported++;
+				} else {
+					$skipped++;
 				}
 			}
 
 			fclose( $handle );
+		} else {
+			self::redirect_with_error( __( 'Could not open uploaded file.', 'aitc-ai-tools' ) );
 		}
+
+		// Restore line ending detection setting
+		ini_set( 'auto_detect_line_endings', $prev_detect );
 
 		if ( ! empty( $errors ) ) {
 			set_transient( 'aitc_ai_tools_import_errors', $errors, 5 * MINUTE_IN_SECONDS );
@@ -189,6 +247,7 @@ class AITC_CSV_Importer {
 					'post_type' => 'ai_tool',
 					'page'      => 'aitc-import-csv',
 					'imported'  => $imported,
+					'skipped'   => $skipped,
 				),
 				admin_url( 'edit.php' )
 			)
@@ -424,7 +483,14 @@ class AITC_CSV_Importer {
 			return;
 		}
 
-		$parts = array_map( 'trim', explode( ',', $raw ) );
+		// Support both pipe-separated and comma-separated values
+		// Detect separator: if pipes are present, prefer pipe; otherwise use comma
+		if ( strpos( $raw, '|' ) !== false ) {
+			$parts = array_map( 'trim', explode( '|', $raw ) );
+		} else {
+			$parts = array_map( 'trim', explode( ',', $raw ) );
+		}
+
 		$slugs = array();
 		foreach ( $parts as $part ) {
 			$slug = sanitize_title( $part );
@@ -453,31 +519,50 @@ class AITC_CSV_Importer {
 			return;
 		}
 
+		$faqs = array();
+
+		// Try JSON format first: [{"q":"...","a":"..."}]
 		$decoded = json_decode( $raw, true );
-		if ( ! is_array( $decoded ) ) {
-			self::add_import_error( $errors, $row_number, __( 'Invalid FAQs JSON. Skipped FAQs.', 'aitc-ai-tools' ) );
-			return;
+		if ( is_array( $decoded ) && ! empty( $decoded ) ) {
+			foreach ( $decoded as $faq ) {
+				if ( ! is_array( $faq ) ) {
+					continue;
+				}
+				$question = isset( $faq['q'] ) ? trim( $faq['q'] ) : '';
+				$answer   = isset( $faq['a'] ) ? trim( $faq['a'] ) : '';
+				if ( $question && $answer ) {
+					$faqs[] = array( 'q' => $question, 'a' => $answer );
+				}
+			}
 		}
 
-		$faqs = array();
-		foreach ( $decoded as $faq ) {
-			if ( ! is_array( $faq ) ) {
-				continue;
+		// Fallback: pipe-separated "Question? Answer | Question? Answer" format
+		if ( empty( $faqs ) && strpos( $raw, '|' ) !== false ) {
+			$parts = array_map( 'trim', explode( '|', $raw ) );
+			foreach ( $parts as $part ) {
+				if ( empty( $part ) ) {
+					continue;
+				}
+				// Split on first "? " to separate question from answer
+				$qmark_pos = strpos( $part, '? ' );
+				if ( $qmark_pos !== false ) {
+					$question = trim( substr( $part, 0, $qmark_pos + 1 ) ); // include the ?
+					$answer   = trim( substr( $part, $qmark_pos + 2 ) );
+					if ( $question && $answer ) {
+						$faqs[] = array( 'q' => $question, 'a' => $answer );
+					}
+				}
 			}
-			$question = isset( $faq['q'] ) ? trim( $faq['q'] ) : '';
-			$answer = isset( $faq['a'] ) ? trim( $faq['a'] ) : '';
-			if ( $question && $answer ) {
-				$faqs[] = array(
-					'q' => $question,
-					'a' => $answer,
-				);
-			}
+		}
+
+		// Last fallback: pipe-separated items stored as simple Q&A pairs
+		if ( empty( $faqs ) && ! empty( $raw ) ) {
+			self::add_import_error( $errors, $row_number, __( 'Could not parse FAQs. Use JSON [{"q":"...","a":"..."}] or pipe-separated "Question? Answer | Question? Answer" format.', 'aitc-ai-tools' ) );
+			return;
 		}
 
 		if ( ! empty( $faqs ) ) {
 			update_post_meta( $post_id, $meta_key, wp_json_encode( $faqs ) );
-		} else {
-			self::add_import_error( $errors, $row_number, __( 'FAQs JSON contained no valid entries. Skipped FAQs.', 'aitc-ai-tools' ) );
 		}
 	}
 
@@ -487,7 +572,14 @@ class AITC_CSV_Importer {
 			return array();
 		}
 
-		$parts = preg_split( "/\r\n|\n|\|/", $value );
+		// Support pipe, newline, or comma as separators
+		// Prefer pipe/newline first; fall back to comma if no pipes or newlines found
+		if ( preg_match( "/\||\r\n|\n/", $value ) ) {
+			$parts = preg_split( "/\r\n|\n|\|/", $value );
+		} else {
+			$parts = explode( ',', $value );
+		}
+
 		$parts = array_map( 'trim', $parts );
 		$parts = array_filter( $parts, function( $part ) {
 			return $part !== '';
