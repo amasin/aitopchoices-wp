@@ -164,6 +164,9 @@ class AITC_CSV_Importer {
 		$skipped  = 0;
 		$errors   = array();
 
+		// Convert file to UTF-8 if needed (handles Excel/Windows-1252 encoding)
+		$file = self::ensure_utf8( $file );
+
 		// Enable auto-detection of line endings (Mac/Windows/Unix)
 		$prev_detect = ini_get( 'auto_detect_line_endings' );
 		ini_set( 'auto_detect_line_endings', true );
@@ -609,6 +612,51 @@ class AITC_CSV_Importer {
 		} else {
 			$errors[] = $message;
 		}
+	}
+
+	/**
+	 * Ensure the CSV file is valid UTF-8.
+	 *
+	 * Excel and other Windows tools often save CSVs in Windows-1252 encoding.
+	 * WordPress sanitize_text_field() returns '' for the entire string if it
+	 * contains even one invalid UTF-8 byte (like Windows-1252 en-dash 0x96).
+	 * This method detects the encoding and converts to UTF-8 if necessary.
+	 */
+	private static function ensure_utf8( $file ) {
+		$content = file_get_contents( $file );
+		if ( false === $content ) {
+			return $file;
+		}
+
+		// Strip UTF-8 BOM if present
+		if ( substr( $content, 0, 3 ) === "\xEF\xBB\xBF" ) {
+			$content = substr( $content, 3 );
+		}
+
+		// Check if already valid UTF-8
+		if ( function_exists( 'mb_check_encoding' ) && mb_check_encoding( $content, 'UTF-8' ) ) {
+			// Already valid UTF-8 — still write back in case BOM was stripped
+			file_put_contents( $file, $content );
+			return $file;
+		}
+
+		// Try to detect and convert encoding
+		if ( function_exists( 'mb_detect_encoding' ) ) {
+			$detected = mb_detect_encoding( $content, array( 'UTF-8', 'Windows-1252', 'ISO-8859-1' ), true );
+			if ( $detected && $detected !== 'UTF-8' ) {
+				$content = mb_convert_encoding( $content, 'UTF-8', $detected );
+			}
+		} elseif ( function_exists( 'iconv' ) ) {
+			// Fallback: assume Windows-1252 (superset of ISO-8859-1, common on Windows)
+			$converted = @iconv( 'Windows-1252', 'UTF-8//TRANSLIT//IGNORE', $content );
+			if ( $converted !== false ) {
+				$content = $converted;
+			}
+		}
+
+		// Write converted content back to temp file
+		file_put_contents( $file, $content );
+		return $file;
 	}
 
 	/**
