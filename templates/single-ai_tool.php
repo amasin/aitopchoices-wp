@@ -5,6 +5,22 @@
 
 get_header();
 
+if ( ! function_exists( 'aitc_repair_broken_unicode' ) ) {
+	/**
+	 * Repair broken Unicode escapes left by wp_unslash() stripping backslashes
+	 * from \uXXXX sequences produced by json_encode(). e.g. "u2013" → "–"
+	 */
+	function aitc_repair_broken_unicode( $str ) {
+		if ( ! is_string( $str ) ) {
+			return $str;
+		}
+		return preg_replace_callback( '/\bu([0-9a-fA-F]{4})\b/', function( $m ) {
+			$char = json_decode( '"\\u' . $m[1] . '"' );
+			return ( $char !== null ) ? $char : $m[0];
+		}, $str );
+	}
+}
+
 if ( ! function_exists( 'aitc_decode_json_array' ) ) {
 	function aitc_decode_json_array( $value ) {
 		if ( empty( $value ) ) {
@@ -15,6 +31,7 @@ if ( ! function_exists( 'aitc_decode_json_array' ) ) {
 		}
 		$decoded = json_decode( $value, true );
 		if ( is_array( $decoded ) ) {
+			$decoded = array_map( 'aitc_repair_broken_unicode', $decoded );
 			return array_values( array_filter( $decoded ) );
 		}
 		return array();
@@ -31,8 +48,8 @@ if ( ! function_exists( 'aitc_decode_faqs' ) ) {
 		foreach ( $decoded as $faq ) {
 			if ( is_array( $faq ) && ! empty( $faq['q'] ) && ! empty( $faq['a'] ) ) {
 				$faqs[] = array(
-					'q' => $faq['q'],
-					'a' => $faq['a'],
+					'q' => aitc_repair_broken_unicode( $faq['q'] ),
+					'a' => aitc_repair_broken_unicode( $faq['a'] ),
 				);
 			}
 		}

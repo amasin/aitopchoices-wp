@@ -56,6 +56,16 @@ class AITC_Meta_Boxes {
 		}
 		$decoded = json_decode( $value, true );
 		if ( is_array( $decoded ) ) {
+			// Repair broken Unicode escapes (wp_unslash strips \ from \uXXXX)
+			$decoded = array_map( function( $item ) {
+				if ( is_string( $item ) ) {
+					return preg_replace_callback( '/\bu([0-9a-fA-F]{4})\b/', function( $m ) {
+						$char = json_decode( '"\\u' . $m[1] . '"' );
+						return ( $char !== null ) ? $char : $m[0];
+					}, $item );
+				}
+				return $item;
+			}, $decoded );
 			return implode( "\n", $decoded );
 		}
 		// Already plain text (newline-separated)
@@ -75,7 +85,7 @@ class AITC_Meta_Boxes {
 		if ( empty( $lines ) ) {
 			return '';
 		}
-		return wp_json_encode( $lines );
+		return wp_json_encode( $lines, JSON_UNESCAPED_UNICODE );
 	}
 
 	/**
@@ -294,7 +304,7 @@ class AITC_Meta_Boxes {
 				}
 			}
 			if ( ! empty( $slugs ) ) {
-				self::set_meta( $post_id, 'alternatives', wp_json_encode( array_values( $slugs ) ) );
+				self::set_meta( $post_id, 'alternatives', wp_json_encode( array_values( $slugs ), JSON_UNESCAPED_UNICODE ) );
 			} else {
 				self::delete_meta( $post_id, 'alternatives' );
 			}
@@ -325,7 +335,7 @@ class AITC_Meta_Boxes {
 			}
 
 			if ( ! empty( $faqs ) ) {
-				self::set_meta( $post_id, 'faqs', wp_json_encode( $faqs ) );
+				self::set_meta( $post_id, 'faqs', wp_json_encode( $faqs, JSON_UNESCAPED_UNICODE ) );
 			} else {
 				self::delete_meta( $post_id, 'faqs' );
 			}

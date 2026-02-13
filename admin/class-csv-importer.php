@@ -467,7 +467,7 @@ class AITC_CSV_Importer {
 
 		$list = self::parse_list_field( $data[ $field ] );
 		if ( ! empty( $list ) ) {
-			update_post_meta( $post_id, $meta_key, wp_json_encode( array_values( $list ) ) );
+			update_post_meta( $post_id, $meta_key, wp_json_encode( array_values( $list ), JSON_UNESCAPED_UNICODE ) );
 		} elseif ( $overwrite_empty_fields ) {
 			delete_post_meta( $post_id, $meta_key );
 		}
@@ -503,7 +503,7 @@ class AITC_CSV_Importer {
 		}
 
 		if ( ! empty( $slugs ) ) {
-			update_post_meta( $post_id, $meta_key, wp_json_encode( array_values( $slugs ) ) );
+			update_post_meta( $post_id, $meta_key, wp_json_encode( array_values( $slugs ), JSON_UNESCAPED_UNICODE ) );
 		} elseif ( $overwrite_empty_fields ) {
 			delete_post_meta( $post_id, $meta_key );
 		}
@@ -565,7 +565,7 @@ class AITC_CSV_Importer {
 		}
 
 		if ( ! empty( $faqs ) ) {
-			update_post_meta( $post_id, $meta_key, wp_json_encode( $faqs ) );
+			update_post_meta( $post_id, $meta_key, wp_json_encode( $faqs, JSON_UNESCAPED_UNICODE ) );
 		}
 	}
 
